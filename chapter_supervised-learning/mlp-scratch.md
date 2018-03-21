@@ -11,8 +11,8 @@ import sys
 sys.path.append('..')
 #..目录的意思，即代表上一级目录。通过这种方式，是的python程序会在上一级找相应的其他python包或者文件。('../..')就是代表上两层的目录
 import utils
-batch_size = 256
-train_data, test_data = utils.load_data_fashion_mnist(batch_size)
+batch_size = 256 #
+train_data, test_data = utils.load_data_fashion_mnist(batch_size)#读取数据，随机，每批读取batch_size，
 ```
 
 ```{.json .output n=1}
@@ -40,10 +40,22 @@ train_data, test_data = utils.load_data_fashion_mnist(batch_size)
 ]
 ```
 
-```{.python .input}
+```{.python .input  n=3}
 import sys
 sys.path.append('..')
-impoty utils
+import utils
+batch_size = 256
+train_data, test_data = utils.load_data_fashion_mnist(batch_size)
+```
+
+```{.json .output n=3}
+[
+ {
+  "name": "stderr",
+  "output_type": "stream",
+  "text": "/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:84: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  label = np.fromstring(fin.read(), dtype=np.uint8).astype(np.int32)\n/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:88: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  data = np.fromstring(fin.read(), dtype=np.uint8)\n"
+ }
+]
 ```
 
 ## 多层感知机
@@ -57,19 +69,39 @@ impoty utils
 ```{.python .input  n=2}
 from mxnet import ndarray as nd
 
+num_inputs = 28*28 #输入是28×28的图片
+num_outputs = 10#输出是10类
+
+num_hidden = 256#中间隐藏层的神经元
+weight_scale = .01#0.01之间数字初始化（分布均值？）
+#共三层
+W1 = nd.random_normal(shape=(num_inputs, num_hidden), scale=weight_scale)#第一层 
+b1 = nd.zeros(num_hidden)
+
+W2 = nd.random_normal(shape=(num_hidden, num_outputs), scale=weight_scale)#第二层
+b2 = nd.zeros(num_outputs)
+
+params = [W1, b1, W2, b2]
+
+for param in params:
+    param.attach_grad()
+```
+
+```{.python .input  n=8}
+from mxnet import ndarray as nd
 num_inputs = 28*28
 num_outputs = 10
 
 num_hidden = 256
-weight_scale = .01
+weight_scale= .01
 
-W1 = nd.random_normal(shape=(num_inputs, num_hidden), scale=weight_scale)
+W1 = nd.random_normal(shape=(num_inputs, num_hidden), scale = weight_scale)
 b1 = nd.zeros(num_hidden)
 
-W2 = nd.random_normal(shape=(num_hidden, num_outputs), scale=weight_scale)
+W2 = nd.random_normal(shape=(num_hidden, num_outputs), scale = weight_scale)
 b2 = nd.zeros(num_outputs)
 
-params = [W1, b1, W2, b2]
+params = [W1,b1,W2,b2]
 
 for param in params:
     param.attach_grad()
@@ -85,7 +117,12 @@ $$\hat{y} = X \cdot W_1 \cdot W_2 = X \cdot W_3 $$
 
 $$\textrm{rel}u(x)=\max(x, 0)$$
 
-```{.python .input  n=3}
+```{.python .input  n=9}
+def relu(X):
+    return nd.maximum(X, 0) #两个参数，输入X 跟0比较 第二个参数可以是array
+```
+
+```{.python .input  n=10}
 def relu(X):
     return nd.maximum(X, 0)
 ```
@@ -100,6 +137,11 @@ def net(X):
     h1 = relu(nd.dot(X, W1) + b1)
     output = nd.dot(h1, W2) + b2
     return output
+```
+
+```{.python .input}
+def net(X):
+    X = X.reshape((-1, num_inputs))#变成向量？矩阵？原来是图片
 ```
 
 ## Softmax和交叉熵损失函数
