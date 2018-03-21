@@ -9,9 +9,41 @@
 ```{.python .input  n=1}
 import sys
 sys.path.append('..')
+#..目录的意思，即代表上一级目录。通过这种方式，是的python程序会在上一级找相应的其他python包或者文件。('../..')就是代表上两层的目录
 import utils
 batch_size = 256
 train_data, test_data = utils.load_data_fashion_mnist(batch_size)
+```
+
+```{.json .output n=1}
+[
+ {
+  "name": "stderr",
+  "output_type": "stream",
+  "text": "/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/matplotlib/font_manager.py:278: UserWarning: Matplotlib is building the font cache using fc-list. This may take a moment.\n  'Matplotlib is building the font cache using fc-list. '\n"
+ },
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Downloading /home/zhang/.mxnet/datasets/fashion-mnist/train-images-idx3-ubyte.gz from https://apache-mxnet.s3-accelerate.dualstack.amazonaws.com/gluon/dataset/fashion-mnist/train-images-idx3-ubyte.gz...\nDownloading /home/zhang/.mxnet/datasets/fashion-mnist/train-labels-idx1-ubyte.gz from https://apache-mxnet.s3-accelerate.dualstack.amazonaws.com/gluon/dataset/fashion-mnist/train-labels-idx1-ubyte.gz...\n"
+ },
+ {
+  "name": "stderr",
+  "output_type": "stream",
+  "text": "/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:84: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  label = np.fromstring(fin.read(), dtype=np.uint8).astype(np.int32)\n/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:88: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  data = np.fromstring(fin.read(), dtype=np.uint8)\n"
+ },
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Downloading /home/zhang/.mxnet/datasets/fashion-mnist/t10k-images-idx3-ubyte.gz from https://apache-mxnet.s3-accelerate.dualstack.amazonaws.com/gluon/dataset/fashion-mnist/t10k-images-idx3-ubyte.gz...\nDownloading /home/zhang/.mxnet/datasets/fashion-mnist/t10k-labels-idx1-ubyte.gz from https://apache-mxnet.s3-accelerate.dualstack.amazonaws.com/gluon/dataset/fashion-mnist/t10k-labels-idx1-ubyte.gz...\n"
+ }
+]
+```
+
+```{.python .input}
+import sys
+sys.path.append('..')
+impoty utils
 ```
 
 ## 多层感知机

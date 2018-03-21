@@ -6,7 +6,7 @@
 
 下面让我们一步步介绍这个包。我们先导入`autograd`。
 
-```{.python .input  n=2}
+```{.python .input  n=1}
 import mxnet.ndarray as nd
 import mxnet.autograd as ag
 ```
@@ -15,28 +15,96 @@ import mxnet.autograd as ag
 
 假设我们想对函数 $f=2\times x^2$ 求关于 $x$ 的导数。我们先创建变量`x`，并赋初值。
 
-```{.python .input}
+```{.python .input  n=2}
 x = nd.array([[1, 2], [3, 4]])
+```
+
+```{.python .input  n=3}
+x
+```
+
+```{.json .output n=3}
+[
+ {
+  "data": {
+   "text/plain": "\n[[ 1.  2.]\n [ 3.  4.]]\n<NDArray 2x2 @cpu(0)>"
+  },
+  "execution_count": 3,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 当进行求导的时候，我们需要一个地方来存`x`的导数，这个可以通过NDArray的方法`attach_grad()`来要求系统申请对应的空间。
 
-```{.python .input}
+```{.python .input  n=4}
 x.attach_grad()
 ```
 
 下面定义`f`。默认条件下，MXNet不会自动记录和构建用于求导的计算图，我们需要使用autograd里的`record()`函数来显式的要求MXNet记录我们需要求导的程序。
 
-```{.python .input}
+```{.python .input  n=5}
 with ag.record():
     y = x * 2
     z = y * x
 ```
 
+```{.python .input  n=8}
+y
+```
+
+```{.json .output n=8}
+[
+ {
+  "data": {
+   "text/plain": "\n[[ 2.  4.]\n [ 6.  8.]]\n<NDArray 2x2 @cpu(0)>"
+  },
+  "execution_count": 8,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
+```{.python .input  n=9}
+z
+```
+
+```{.json .output n=9}
+[
+ {
+  "data": {
+   "text/plain": "\n[[  2.   8.]\n [ 18.  32.]]\n<NDArray 2x2 @cpu(0)>"
+  },
+  "execution_count": 9,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
 接下来我们可以通过`z.backward()`来进行求导。如果`z`不是一个标量，那么`z.backward()`等价于`nd.sum(z).backward()`.
 
-```{.python .input}
+```{.python .input  n=6}
 z.backward()
+```
+
+```{.python .input  n=7}
+x.grad
+```
+
+```{.json .output n=7}
+[
+ {
+  "data": {
+   "text/plain": "\n[[  4.   8.]\n [ 12.  16.]]\n<NDArray 2x2 @cpu(0)>"
+  },
+  "execution_count": 7,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 现在我们来看求出来的导数是不是正确的。注意到`y = x * 2`和`z = x * y`，所以`z`等价于`2 * x * x`。它的导数那么就是 $\frac{dz}{dx} = 4 \times {x}$ 。
@@ -46,11 +114,37 @@ print('x.grad: ', x.grad)
 x.grad == 4*x
 ```
 
+```{.python .input  n=25}
+x = nd.array([[1, 2], [3, 4]])
+x.attach_grad()
+with ag.record():
+    y = x * 2
+    z = y * x
+z.backward(retain_graph=True)
+print(x.grad)
+y.backward()
+print(x.grad)
+```
+
+```{.json .output n=25}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "\n[[  4.   8.]\n [ 12.  16.]]\n<NDArray 2x2 @cpu(0)>\n\n[[ 2.  2.]\n [ 2.  2.]]\n<NDArray 2x2 @cpu(0)>\n"
+ }
+]
+```
+
+```{.python .input  n=26}
+z.backward??
+```
+
 ## 对控制流求导
 
 命令式的编程的一个便利之处是几乎可以对任意的可导程序进行求导，即使里面包含了Python的控制流。考虑下面程序，里面包含控制流`for`和`if`，但循环迭代的次数和判断语句的执行都是取决于输入的值。不同的输入会导致这个程序的执行不一样。（对于计算图框架来说，这个对应于动态图，就是图的结构会根据输入数据不同而改变）。
 
-```{.python .input  n=3}
+```{.python .input  n=14}
 def f(a):
     b = a * 2
     while nd.norm(b).asscalar() < 1000:
@@ -64,7 +158,7 @@ def f(a):
 
 我们可以跟之前一样使用`record`记录和`backward`求导。
 
-```{.python .input  n=5}
+```{.python .input  n=15}
 a = nd.random_normal(shape=3)
 a.attach_grad()
 with ag.record():
@@ -72,10 +166,91 @@ with ag.record():
 c.backward()
 ```
 
+```{.python .input  n=20}
+c
+```
+
+```{.json .output n=20}
+[
+ {
+  "data": {
+   "text/plain": "\n[ 606.16986084  968.55621338 -632.18762207]\n<NDArray 3 @cpu(0)>"
+  },
+  "execution_count": 20,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
+```{.python .input  n=16}
+a.grad
+```
+
+```{.json .output n=16}
+[
+ {
+  "data": {
+   "text/plain": "\n[ 512.  512.  512.]\n<NDArray 3 @cpu(0)>"
+  },
+  "execution_count": 16,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
+```{.python .input  n=18}
+c/a
+```
+
+```{.json .output n=18}
+[
+ {
+  "data": {
+   "text/plain": "\n[ 512.  512.  512.]\n<NDArray 3 @cpu(0)>"
+  },
+  "execution_count": 18,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
+```{.python .input  n=19}
+a
+```
+
+```{.json .output n=19}
+[
+ {
+  "data": {
+   "text/plain": "\n[ 1.18392551  1.89171135 -1.23474145]\n<NDArray 3 @cpu(0)>"
+  },
+  "execution_count": 19,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
 注意到给定输入`a`，其输出 $\\f(a)= {xa}$，$x$ 的值取决于输入`a`。所以有 $\frac{df}{da} = {x}$，我们可以很简单地评估自动求导的导数：
 
-```{.python .input  n=8}
+```{.python .input  n=13}
 a.grad == c/a
+```
+
+```{.json .output n=13}
+[
+ {
+  "data": {
+   "text/plain": "\n[ 1.  1.  1.]\n<NDArray 3 @cpu(0)>"
+  },
+  "execution_count": 13,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 ## 头梯度和链式法则
