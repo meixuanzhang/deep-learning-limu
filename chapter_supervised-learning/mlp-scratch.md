@@ -40,7 +40,7 @@ train_data, test_data = utils.load_data_fashion_mnist(batch_size)#读取数据�
 ]
 ```
 
-```{.python .input  n=3}
+```{.python .input  n=1}
 import sys
 sys.path.append('..')
 import utils
@@ -48,7 +48,7 @@ batch_size = 256
 train_data, test_data = utils.load_data_fashion_mnist(batch_size)
 ```
 
-```{.json .output n=3}
+```{.json .output n=1}
 [
  {
   "name": "stderr",
@@ -66,7 +66,7 @@ train_data, test_data = utils.load_data_fashion_mnist(batch_size)
 
 这里我们定义一个只有一个隐含层的模型，这个隐含层输出256个节点。
 
-```{.python .input  n=2}
+```{.python .input  n=5}
 from mxnet import ndarray as nd
 
 num_inputs = 28*28 #输入是28×28的图片
@@ -122,7 +122,7 @@ def relu(X):
     return nd.maximum(X, 0) #两个参数，输入X 跟0比较 第二个参数可以是array
 ```
 
-```{.python .input  n=10}
+```{.python .input  n=4}
 def relu(X):
     return nd.maximum(X, 0)
 ```
@@ -139,6 +139,14 @@ def net(X):
     return output
 ```
 
+```{.python .input  n=8}
+def net(X):
+    X = X.reshape((-1, num_inputs))
+    h1 = relu(nd.dot(X, W1) + b1)
+    output = nd.dot(h1, W2)+b2
+    return output
+```
+
 ```{.python .input}
 def net(X):
     X = X.reshape((-1, num_inputs))#变成向量？矩阵？原来是图片
@@ -149,6 +157,11 @@ def net(X):
 在多类Logistic回归里我们提到分开实现Softmax和交叉熵损失函数可能导致数值不稳定。这里我们直接使用Gluon提供的函数
 
 ```{.python .input  n=6}
+from mxnet import gluon
+softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
+```
+
+```{.python .input  n=2}
 from mxnet import gluon
 softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
 ```
@@ -179,6 +192,39 @@ for epoch in range(5):
     print("Epoch %d. Loss: %f, Train acc %f, Test acc %f" % (
         epoch, train_loss/len(train_data),
         train_acc/len(train_data), test_acc))
+```
+
+```{.python .input  n=9}
+from mxnet import autograd as ag
+
+learning_rate= .5
+
+for epoch in range(5):
+    train_loss = 0
+    train_acc = 0
+    for data, label in train_data:
+        with ag.record():
+            output = net(data)
+            loss = softmax_cross_entropy(output, label)
+        loss.backward()
+        utils.SGD(params, learning_rate/batch_size)
+            
+        train_loss +=nd.mean(loss).asscalar()
+        train_acc += utils.accuracy(output, label)
+            
+    test_acc=utils.evaluate_accuracy(test_data, net)
+    print("Epoch %d. LOss: %f, Train acc %f,Test acc %f"%(
+        epoch,train_loss/len(train_data),train_acc/len(train_data),test_acc))
+```
+
+```{.json .output n=9}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Epoch 0. LOss: 0.797086, Train acc 0.699419,Test acc 0.810597\nEpoch 1. LOss: 0.494244, Train acc 0.817575,Test acc 0.843750\nEpoch 2. LOss: 0.430216, Train acc 0.840261,Test acc 0.853265\nEpoch 3. LOss: 0.394384, Train acc 0.854250,Test acc 0.843950\nEpoch 4. LOss: 0.375687, Train acc 0.860443,Test acc 0.851462\n"
+ }
+]
 ```
 
 ## 总结
