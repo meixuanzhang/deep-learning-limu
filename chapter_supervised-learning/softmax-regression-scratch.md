@@ -15,7 +15,7 @@
 
 这里我们用了一个稍微复杂点的数据集，它跟MNIST非常像，但是内容不再是分类数字，而是服饰。我们通过gluon的data.vision模块自动下载这个数据。
 
-```{.python .input  n=1}
+```{.python .input  n=20}
 from mxnet import gluon
 from mxnet import ndarray as nd
 
@@ -25,7 +25,7 @@ mnist_train = gluon.data.vision.FashionMNIST(train=True, transform=transform)
 mnist_test = gluon.data.vision.FashionMNIST(train=False, transform=transform)
 ```
 
-```{.json .output n=1}
+```{.json .output n=20}
 [
  {
   "name": "stderr",
@@ -37,18 +37,18 @@ mnist_test = gluon.data.vision.FashionMNIST(train=False, transform=transform)
 
 打印一个样本的形状和它的标号
 
-```{.python .input  n=2}
+```{.python .input  n=30}
 data, label = mnist_train[0]
-('example shape: ', data.shape, 'label:', label)
+('example shape: ', data.shape, 'label:', label)#黑白，第三维channel是1,彩色channel是3
 ```
 
-```{.json .output n=2}
+```{.json .output n=30}
 [
  {
   "data": {
    "text/plain": "('example shape: ', (28, 28, 1), 'label:', 2.0)"
   },
-  "execution_count": 2,
+  "execution_count": 30,
   "metadata": {},
   "output_type": "execute_result"
  }
@@ -103,7 +103,7 @@ print(get_text_labels(label))
 
 虽然我们可以像前面那样通过`yield`来定义获取批量数据函数，这里我们直接使用gluon.data的DataLoader函数，它每次`yield`一个批量。
 
-```{.python .input  n=5}
+```{.python .input  n=21}
 batch_size = 256
 train_data = gluon.data.DataLoader(mnist_train, batch_size, shuffle=True)
 test_data = gluon.data.DataLoader(mnist_test, batch_size, shuffle=False)
@@ -115,11 +115,13 @@ test_data = gluon.data.DataLoader(mnist_test, batch_size, shuffle=False)
 
 跟线性模型一样，每个样本会表示成一个向量。我们这里数据是 28 * 28 大小的图片，所以输入向量的长度是 28 * 28 = 784。因为我们要做多类分类，我们需要对每一个类预测这个样本属于此类的概率。因为这个数据集有10个类型，所以输出应该是长为10的向量。这样，我们需要的权重将是一个 784 * 10 的矩阵：
 
-```{.python .input  n=5}
-num_inputs = 784
-num_outputs = 10
+```{.python .input  n=22}
+from mxnet import random as mxrandom
+mxrandom.seed(1)
+num_inputs = 784#输入维度
+num_outputs = 10#输出
 
-W = nd.random_normal(shape=(num_inputs, num_outputs))
+W = nd.random_normal(shape=(num_inputs, num_outputs))#矩阵行784，列10维
 b = nd.random_normal(shape=num_outputs)
 
 params = [W, b]
@@ -127,7 +129,7 @@ params = [W, b]
 
 同之前一样，我们要对模型参数附上梯度：
 
-```{.python .input  n=6}
+```{.python .input  n=23}
 for param in params:
     param.attach_grad()
 ```
@@ -136,7 +138,7 @@ for param in params:
 
 在线性回归教程里，我们只需要输出一个标量`yhat`使得尽可能的靠近目标值。但在这里的分类里，我们需要属于每个类别的概率。这些概率需要值为正，而且加起来等于1. 而如果简单的使用 $\boldsymbol{\hat y} = \boldsymbol{W} \boldsymbol{x}$, 我们不能保证这一点。一个通常的做法是通过softmax函数来将任意的输入归一化成合法的概率值。
 
-```{.python .input  n=7}
+```{.python .input  n=24}
 from mxnet import nd
 def softmax(X):
     exp = nd.exp(X)
@@ -157,9 +159,10 @@ print(X_prob.sum(axis=1))
 
 现在我们可以定义模型了：
 
-```{.python .input  n=9}
+```{.python .input  n=25}
 def net(X):
-    return softmax(nd.dot(X.reshape((-1,num_inputs)), W) + b)
+    return softmax(nd.dot(X.reshape((-1,num_inputs)), W) + b) 
+#返回向量，W是矩阵，列维度是num_inputs,-1系统自动（可改成batch_size ,需要保证X每次样本量是batch_size），将输入变成了行，每行一个样本，W一列是一组权重
 ```
 
 ## 交叉熵损失函数
@@ -168,23 +171,33 @@ def net(X):
 
 具体来说，我们先将真实标号表示成一个概率分布，例如如果`y=1`，那么其对应的分布就是一个除了第二个元素为1其他全为0的长为10的向量，也就是 `yvec=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0]`。那么交叉熵就是`yvec[0]*log(yhat[0])+...+yvec[n]*log(yhat[n])`。注意到`yvec`里面只有一个1，那么前面等价于`log(yhat[y])`。所以我们可以定义这个损失函数了
 
-```{.python .input  n=10}
+```{.python .input  n=26}
 def cross_entropy(yhat, y):
     return - nd.pick(nd.log(yhat), y)
+#一列里取第y个，y是label
+```
+
+```{.python .input  n=5}
+x = [[ 1.,  2.],
+     [ 3.,  4.],
+     [ 5.,  6.]]
+x=nd.array(x)
+index=nd.array([0,1])
+nd.pick(x, index,axis=0)
 ```
 
 ## 计算精度
 
 给定一个概率输出，我们将预测概率最高的那个类作为预测的类，然后通过比较真实标号我们可以计算精度：
 
-```{.python .input  n=12}
+```{.python .input  n=27}
 def accuracy(output, label):
     return nd.mean(output.argmax(axis=1)==label).asscalar()
 ```
 
 我们可以评估一个模型在这个数据上的精度。（这两个函数我们之后也会用到，所以也都保存在[../utils.py](../utils.py)。）
 
-```{.python .input  n=13}
+```{.python .input  n=28}
 def evaluate_accuracy(data_iterator, net):
     acc = 0.
     for data, label in data_iterator:
@@ -203,7 +216,7 @@ evaluate_accuracy(test_data, net)
 
 训练代码跟前面的线性回归非常相似：
 
-```{.python .input  n=3}
+```{.python .input  n=29}
 import sys
 sys.path.append('..')
 from utils import SGD
@@ -228,6 +241,16 @@ for epoch in range(5):
     test_acc = evaluate_accuracy(test_data, net)
     print("Epoch %d. Loss: %f, Train acc %f, Test acc %f" % (
         epoch, train_loss/len(train_data), train_acc/len(train_data), test_acc))
+```
+
+```{.json .output n=29}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Epoch 0. Loss: 3.508390, Train acc 0.461392, Test acc 0.599023\nEpoch 1. Loss: 1.832636, Train acc 0.638370, Test acc 0.658594\nEpoch 2. Loss: 1.527671, Train acc 0.683178, Test acc 0.688184\nEpoch 3. Loss: 1.361285, Train acc 0.706987, Test acc 0.706738\nEpoch 4. Loss: 1.251543, Train acc 0.723199, Test acc 0.722656\n"
+ }
+]
 ```
 
 ## 预测
@@ -261,3 +284,7 @@ print(get_text_labels(predicted_labels.asnumpy()))
 请仔细想想再去对比下我们小伙伴之一@[pluskid](https://github.com/pluskid)早年写的一篇[blog解释这个问题](http://freemind.pluskid.org/machine-learning/softmax-vs-softmax-loss-numerical-stability/)，看看你想的是不是不一样。
 
 **吐槽和讨论欢迎点**[这里](https://discuss.gluon.ai/t/topic/741)
+
+梯度下降在接近底部会有来回震荡
+
+exp输入很大会导致超出计算范围？

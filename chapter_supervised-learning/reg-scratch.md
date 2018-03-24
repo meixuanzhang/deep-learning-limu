@@ -21,6 +21,16 @@ from mxnet import autograd
 from mxnet import gluon
 import mxnet as mx
 
+num_train = 20#训练集样本量
+num_test = 100#测试集样本量
+num_inputs = 200#输入维度？
+```
+
+```{.python .input  n=1}
+from mxnet import ndarray as nd
+from mxnet import autograd
+from mxnet import gluon
+
 num_train = 20
 num_test = 100
 num_inputs = 200
@@ -31,19 +41,33 @@ num_inputs = 200
 
 这里定义模型真实参数。
 
-```{.python .input  n=2}
-true_w = nd.ones((num_inputs, 1)) * 0.01
+```{.python .input  n=4}
+true_w = nd.ones((num_inputs, 1)) * 0.01#一列
+true_b = 0.05
+```
+
+```{.python .input}
+true_w = nd.ones(shape = (num_inputs, 1))*0.01
 true_b = 0.05
 ```
 
 我们接着生成训练和测试数据集。
 
-```{.python .input  n=3}
-X = nd.random.normal(shape=(num_train + num_test, num_inputs))
+```{.python .input  n=5}
+X = nd.random.normal(shape=(num_train + num_test, num_inputs))#行是样本量，列是属性
 y = nd.dot(X, true_w) + true_b
-y += .01 * nd.random.normal(shape=y.shape)
+y += .01 * nd.random.normal(shape=y.shape)#一列
 
 X_train, X_test = X[:num_train, :], X[num_train:, :]
+y_train, y_test = y[:num_train], y[num_train:]
+```
+
+```{.python .input  n=7}
+X = nd.random.normal(shape = (num_train + num_test, num_inputs))
+y=nd.dot(X, true_w) + true_b
+y += .01 * nd.random.normal(shape=y.shape)
+
+X_train, X_test = X[: num_train, :], X[num_train:, :]
 y_train, y_test = y[:num_train], y[num_train:]
 ```
 
@@ -60,9 +84,30 @@ def data_iter(num_examples):
         yield X.take(j), y.take(j)
 ```
 
+```{.python .input  n=9}
+import random
+barch_size = 1
+def data_iter(num_examples):
+    idx = list(range(num_examles))
+    random.shuffle(idx)
+    for i in range(0, num_examples, batch_size):
+        j = nd.array(idx[i: min(i+batch_size, num_examples)])
+        yield X.take(j), y.take(j)
+```
+
 ## 初始化模型参数
 
 下面我们随机初始化模型参数。之后训练时我们需要对这些参数求导来更新它们的值，所以我们需要创建它们的梯度。
+
+```{.python .input}
+def init_params():
+    w = nd.random_normal(scale =1, shape=(num_inputs, 1))
+    b = nd.zero(shape=(1,))
+    params = [w,b]
+    for param in params:
+        param.attach_grad()
+    return params
+```
 
 ```{.python .input  n=5}
 def init_params():
@@ -87,9 +132,56 @@ def L2_penalty(w, b):
     return ((w**2).sum() + b**2) / 2
 ```
 
+```{.python .input  n=11}
+def L2_penalty(w,b):
+    return ((w**2).sum()+ b**2) /2
+```
+
 ## 定义训练和测试
 
 下面我们定义剩下的所需要的函数。这个跟之前的教程大致一样，主要是区别在于计算`loss`的时候我们加上了L2正则化，以及我们将训练和测试损失都画了出来。
+
+```{.python .input}
+%matplotlib inline
+import matplotlib as mpl
+mpl.rcParams['figure.dpi']=120
+import matplotlib.pyplot as plt
+import numpy as np
+
+def net(X, w, b):
+    return nd.dot(X,w)+b
+
+def square_loss(yhat, y):
+    return (yhat - y.reshape(yhat.shape))**2/2
+
+def sgd(params, lr, batch_size):
+    for param in params:
+        param[:] = param - lr*param.grad / batch_size
+
+def test(net, params, X, y):
+    return square_loss(net(X, *params), y).mean().asscalar()
+
+def train(lambd):
+    epochs = 10
+    learning rate = 0.005
+    w, b = params = init_params()
+    train_loss = []
+    test_loss = []
+    for e in range(epochs):
+        for data ,label in data_iter(num_train):
+            with autograd.record:
+                output = net(data, *params)
+                loss = square_loss(output, label)+lambd* L2_penalty(*params)
+            loss.backward()
+            sgd(params, learning_rate,batch_size)
+        train_loss.append(test(net, params, X_train, y_train))
+        test_loss.append(test(net, params, X_test, y_test))
+    plt.plot(train_loss)
+    plt.plot(test_loss)
+    plt.legend(['train', 'test'])
+    plt.show()
+    return 'learned w[:10]:', w[:10].T, 'learned b:', b
+```
 
 ```{.python .input  n=7}
 %matplotlib inline
@@ -104,13 +196,14 @@ def net(X, w, b):
 def square_loss(yhat, y):
     return (yhat - y.reshape(yhat.shape)) ** 2 / 2
 
-def sgd(params, lr, batch_size):
+def sgd(params, lr, batch_size):#params = [w,b]
     for param in params:
         param[:] = param - lr * param.grad / batch_size
         
 def test(net, params, X, y):
     return square_loss(net(X, *params), y).mean().asscalar()
     #return np.mean(square_loss(net(X, *params), y).asnumpy())
+    #params = [w,b]
 
 def train(lambd):
     epochs = 10

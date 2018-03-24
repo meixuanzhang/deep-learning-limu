@@ -10,6 +10,7 @@
 from mxnet import ndarray as nd
 from mxnet import autograd
 from mxnet import gluon
+from mxnet import random as mxrandom
 
 num_inputs = 2
 num_examples = 1000
@@ -17,6 +18,7 @@ num_examples = 1000
 true_w = [2, -3.4]
 true_b = 4.2
 
+mxrandom.seed(1)
 X = nd.random_normal(shape=(num_examples, num_inputs))
 y = true_w[0] * X[:, 0] + true_w[1] * X[:, 1] + true_b
 y += .01 * nd.random_normal(shape=y.shape)
@@ -119,7 +121,7 @@ true_b, dense.bias.data()
 
 ## 练习
 
-- 在训练的时候，为什么我们用了比前面要大10倍的学习率呢？（提示：可以尝试运行 `help(trainer.step)`来寻找答案。）
+- 在训练的时候，为什么我们用了比前面要大10倍的学习率呢？（提示：可以尝试运行 `help(trainer.step)`来寻找答案。）是%  ？
 - 如何拿到`weight`的梯度呢？（提示：尝试 `help(dense.weight)`）
 
 **吐槽和讨论欢迎点**[这里](https://discuss.gluon.ai/t/topic/742)

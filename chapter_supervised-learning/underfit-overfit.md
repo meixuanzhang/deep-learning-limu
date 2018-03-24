@@ -174,6 +174,23 @@ def train(X_train, X_test, y_train, y_test):
     trainer = gluon.Trainer(net.collect_params, 'sgd' ,{'learning_rate':learning_rate})
     square_loss=gluon.loss.L2Loss()
     
+    train_loss = []
+    test_loss = []
+    for e in range(epochs):
+        for data, label in data_iter_train:
+            with autograd.record():
+                output = net(data)
+                loss = square_loss(output, label)
+            loss.backward()
+            trainer.step(batch_size)
+        train_loss.append(square_loss(net(X_train), y_train).mean().asscalar())
+        test_loss.append(square_loss(net(X_test), y_test).mean().asscalar())
+    plt.plot(train_loss)
+    plt.plot(test_loss)
+    plt.legend(['train','test'])
+    plt.show()
+    return ('learned weight', net[0].weight.data(), 
+            'learned bias', net[0].bias.data())
 ```
 
 ```{.python .input  n=11}
@@ -220,7 +237,6 @@ def train(X_train, X_test, y_train, y_test):
     plt.show()
     return ('learned weight', net[0].weight.data(), 
             'learned bias', net[0].bias.data())
-#batch_size调大收敛变慢
 ```
 
 ### 三阶多项式拟合（正常）
@@ -325,3 +341,6 @@ train(X[0:2, :], X[num_train:, :], y[0:2], y[num_train:])
 1. 在我们本节提到的三阶多项式拟合问题里，有没有可能把1000个样本的训练误差的期望降到0，为什么？
 
 **吐槽和讨论欢迎点**[这里](https://discuss.gluon.ai/t/topic/983)
+
+## 笔记
+1. batch_size调大收敛变慢：size越大，梯度大小平均更为平缓？

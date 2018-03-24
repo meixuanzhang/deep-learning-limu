@@ -31,16 +31,17 @@ $$y = X \cdot w + b + \eta, \quad \text{for } \eta \sim \mathcal{N}(0,\sigma^2)$
 ```{.python .input  n=2}
 from mxnet import ndarray as nd
 from mxnet import autograd
+from mxnet import random as mxrandom
+mxrandom.seed(1)
+num_inputs = 2#输入维度
+num_examples = 1000#样本量
 
-num_inputs = 2
-num_examples = 1000
+true_w = [2, -3.4]#参数
+true_b = 4.2#参数
 
-true_w = [2, -3.4]
-true_b = 4.2
-
-X = nd.random_normal(shape=(num_examples, num_inputs))
-y = true_w[0] * X[:, 0] + true_w[1] * X[:, 1] + true_b
-y += .01 * nd.random_normal(shape=y.shape)
+X = nd.random_normal(shape=(num_examples, num_inputs))#行是样本，列是属性
+y = true_w[0] * X[:, 0] + true_w[1] * X[:, 1] + true_b#输出列向量
+y += .01 * nd.random_normal(shape=y.shape)#raw random samples from a normal (Gaussian) distribution.默认均值为0，标准差为1
 ```
 
 注意到`X`的每一行是一个长度为2的向量，而`y`的每一行是一个长度为1的向量（标量）。
@@ -53,7 +54,7 @@ print(X[0], y[0])
 
 ```{.python .input}
 import matplotlib.pyplot as plt
-plt.scatter(X[:, 1].asnumpy(),y.asnumpy())
+plt.scatter(X[:, 1].asnumpy(),y.asnumpy())#mxnet -> numpy(asnumpy)
 plt.show()
 ```
 
@@ -66,11 +67,13 @@ import random
 batch_size = 10
 def data_iter():
     # 产生一个随机索引
-    idx = list(range(num_examples))
-    random.shuffle(idx)
-    for i in range(0, num_examples, batch_size):
-        j = nd.array(idx[i:min(i+batch_size,num_examples)])
+    idx = list(range(num_examples))#生成样本索引列表
+    random.seed(1)#随机数生成器的种子
+    random.shuffle(idx)#索引列表随机
+    for i in range(0, num_examples, batch_size):#取值0、10、20、30...
+        j = nd.array(idx[i:min(i+batch_size,num_examples)])#[0:10],[10:20]..
         yield nd.take(X, j), nd.take(y, j)
+        #Takes elements from an input array along the "given axis".使用0值表示沿着每一列或行标签\索引值向下执行方法
 ```
 
 下面代码读取第一个随机数据块
@@ -86,9 +89,14 @@ for data, label in data_iter():
 下面我们随机初始化模型参数
 
 ```{.python .input  n=6}
+mxrandom.seed(1)
 w = nd.random_normal(shape=(num_inputs, 1))
 b = nd.zeros((1,))
 params = [w, b]
+```
+
+```{.python .input}
+w
 ```
 
 之后训练时我们需要对这些参数求导来更新它们的值，使损失尽量减小；因此我们需要创建它们的梯度。
@@ -180,7 +188,7 @@ for e in range(epochs):
 
         if (niter + 1) % 100 == 0:
             losses.append(est_loss)
-            print("Epoch %s, batch %s. Moving avg of loss: %s. Average loss: %f" % (e, niter, est_loss, total_loss/num_examples))
+            print("Epoch %s, batch %s. Moving avg of loss: %s. Average loss:%f" % (e, niter, est_loss, total_loss/num_examples))
             plot(losses, X)
 ```
 
@@ -207,3 +215,68 @@ true_b, b
 欢迎扫码直达[本节内容讨论区](https://discuss.gluon.ai/t/topic/743)：
 
 ![](../img/qr/linear-regression-scratch.png)
+
+# 练习
+
+
+```{.python .input}
+def reset_para():
+    global w,b,params
+    mxrandom.seed(1)
+    w = nd.random_normal(shape=(num_inputs, 1))
+    b = nd.zeros((1,))
+    params = [w, b]
+    for param in params:
+        param.attach_grad()
+```
+
+```{.python .input}
+def train(epochs,learning_rate):
+    total_loss = []
+    for i in range(epochs):
+        for data, label in data_iter():
+            with autograd.record():
+                output = net(data)
+                loss = square_loss(output, label)
+            loss.backward()
+            SGD(params, learning_rate)
+        loss_record=square_loss(net(X),y).mean().asscalar()
+        total_loss.append(loss_record)
+        print("Epoch %d. Loss: %f" % (i, loss_record))
+        #plot(total_loss,X)
+```
+
+```{.python .input}
+reset_para()
+epochs = 5
+learning_rate = .001
+train(epochs,learning_rate)
+```
+
+```{.python .input}
+reset_para()
+epochs = 20
+learning_rate = .001
+train(epochs,learning_rate)
+```
+
+```{.python .input}
+reset_para()
+epochs = 20
+learning_rate = .0001
+train(epochs,learning_rate)
+```
+
+```{.python .input}
+reset_para()
+epochs = 20
+learning_rate = .05
+train(epochs,learning_rate)
+```
+
+```{.python .input}
+reset_para()
+epochs = 100
+learning_rate = .0001
+train(epochs,learning_rate)
+```

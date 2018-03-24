@@ -53,11 +53,12 @@ def train(weight_decay):
     net = gluon.nn.Sequential()
     with net.name_scope():
         net.add(gluon.nn.Dense(1))
-    net.collect_params().initialize(mx.init.Normal(sigma=1))
+    net.collect_params().initialize(mx.init.Normal(sigma=1))#
 
     # 注意到这里 'wd'
     trainer = gluon.Trainer(net.collect_params(), 'sgd', {
         'learning_rate': learning_rate, 'wd': weight_decay})
+    #w = w-lr*grad - wd*w
     
     train_loss = []
     test_loss = []
@@ -77,6 +78,20 @@ def train(weight_decay):
 
     return ('learned w[:10]:', net[0].weight.data()[:,:10], 
             'learned b:', net[0].bias.data())
+```
+
+```{.python .input  n=2}
+net.collect_params??
+```
+
+```{.json .output n=2}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Object `net.collect_params` not found.\n"
+ }
+]
 ```
 
 ### 训练模型并观察过拟合

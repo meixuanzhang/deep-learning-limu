@@ -6,6 +6,10 @@
 
 下面让我们一步步介绍这个包。我们先导入`autograd`。
 
+To compute gradient with respect to an NDArray x, first call x.attach_grad() to allocate space for the gradient. 
+Then, start a with autograd.record() block, and do some computation. 
+Finally, call backward() on
+
 ```{.python .input  n=1}
 import mxnet.ndarray as nd
 import mxnet.autograd as ag
@@ -21,19 +25,6 @@ x = nd.array([[1, 2], [3, 4]])
 
 ```{.python .input  n=3}
 x
-```
-
-```{.json .output n=3}
-[
- {
-  "data": {
-   "text/plain": "\n[[ 1.  2.]\n [ 3.  4.]]\n<NDArray 2x2 @cpu(0)>"
-  },
-  "execution_count": 3,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
 ```
 
 当进行求导的时候，我们需要一个地方来存`x`的导数，这个可以通过NDArray的方法`attach_grad()`来要求系统申请对应的空间。
@@ -54,34 +45,8 @@ with ag.record():
 y
 ```
 
-```{.json .output n=8}
-[
- {
-  "data": {
-   "text/plain": "\n[[ 2.  4.]\n [ 6.  8.]]\n<NDArray 2x2 @cpu(0)>"
-  },
-  "execution_count": 8,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
-```
-
 ```{.python .input  n=9}
 z
-```
-
-```{.json .output n=9}
-[
- {
-  "data": {
-   "text/plain": "\n[[  2.   8.]\n [ 18.  32.]]\n<NDArray 2x2 @cpu(0)>"
-  },
-  "execution_count": 9,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
 ```
 
 接下来我们可以通过`z.backward()`来进行求导。如果`z`不是一个标量，那么`z.backward()`等价于`nd.sum(z).backward()`.
@@ -92,19 +57,6 @@ z.backward()
 
 ```{.python .input  n=7}
 x.grad
-```
-
-```{.json .output n=7}
-[
- {
-  "data": {
-   "text/plain": "\n[[  4.   8.]\n [ 12.  16.]]\n<NDArray 2x2 @cpu(0)>"
-  },
-  "execution_count": 7,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
 ```
 
 现在我们来看求出来的导数是不是正确的。注意到`y = x * 2`和`z = x * y`，所以`z`等价于`2 * x * x`。它的导数那么就是 $\frac{dz}{dx} = 4 \times {x}$ 。
@@ -126,19 +78,10 @@ y.backward()
 print(x.grad)
 ```
 
-```{.json .output n=25}
-[
- {
-  "name": "stdout",
-  "output_type": "stream",
-  "text": "\n[[  4.   8.]\n [ 12.  16.]]\n<NDArray 2x2 @cpu(0)>\n\n[[ 2.  2.]\n [ 2.  2.]]\n<NDArray 2x2 @cpu(0)>\n"
- }
-]
-```
-
-```{.python .input  n=26}
-z.backward??
-```
+retain_graph : bool, optional
+            Whether to retain the computaion graph for another backward
+            pass on the same graph. By default the computaion history
+            is cleared.
 
 ## 对控制流求导
 
@@ -170,87 +113,22 @@ c.backward()
 c
 ```
 
-```{.json .output n=20}
-[
- {
-  "data": {
-   "text/plain": "\n[ 606.16986084  968.55621338 -632.18762207]\n<NDArray 3 @cpu(0)>"
-  },
-  "execution_count": 20,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
-```
-
 ```{.python .input  n=16}
 a.grad
-```
-
-```{.json .output n=16}
-[
- {
-  "data": {
-   "text/plain": "\n[ 512.  512.  512.]\n<NDArray 3 @cpu(0)>"
-  },
-  "execution_count": 16,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
 ```
 
 ```{.python .input  n=18}
 c/a
 ```
 
-```{.json .output n=18}
-[
- {
-  "data": {
-   "text/plain": "\n[ 512.  512.  512.]\n<NDArray 3 @cpu(0)>"
-  },
-  "execution_count": 18,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
-```
-
 ```{.python .input  n=19}
 a
-```
-
-```{.json .output n=19}
-[
- {
-  "data": {
-   "text/plain": "\n[ 1.18392551  1.89171135 -1.23474145]\n<NDArray 3 @cpu(0)>"
-  },
-  "execution_count": 19,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
 ```
 
 注意到给定输入`a`，其输出 $\\f(a)= {xa}$，$x$ 的值取决于输入`a`。所以有 $\frac{df}{da} = {x}$，我们可以很简单地评估自动求导的导数：
 
 ```{.python .input  n=13}
 a.grad == c/a
-```
-
-```{.json .output n=13}
-[
- {
-  "data": {
-   "text/plain": "\n[ 1.  1.  1.]\n<NDArray 3 @cpu(0)>"
-  },
-  "execution_count": 13,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
 ```
 
 ## 头梯度和链式法则
