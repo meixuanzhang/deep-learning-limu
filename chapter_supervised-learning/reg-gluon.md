@@ -80,20 +80,6 @@ def train(weight_decay):
             'learned b:', net[0].bias.data())
 ```
 
-```{.python .input  n=2}
-net.collect_params??
-```
-
-```{.json .output n=2}
-[
- {
-  "name": "stdout",
-  "output_type": "stream",
-  "text": "Object `net.collect_params` not found.\n"
- }
-]
-```
-
 ### 训练模型并观察过拟合
 
 接下来我们训练并测试我们的高维线性回归模型。
@@ -126,3 +112,12 @@ train(5)
 * 如何从字面正确理解`weight decay`的含义？它为何相当于$L_2$范式正则化？
 
 **吐槽和讨论欢迎点**[这里](https://discuss.gluon.ai/t/topic/985)
+
+```{.python .input}
+参数初始化，https://mxnet.incubator.apache.org/_modules/mxnet/gluon/parameter.html#ParameterDict
+    https://mxnet.incubator.apache.org/_modules/mxnet/initializer.htm#initializer.Uniform()
+    
+def initialize(self, init=initializer.Uniform(), ctx=None, verbose=False):
+        self.collect_params().initialize(init, ctx, verbose)
+        #collect_params()返回ParameterDict
+```

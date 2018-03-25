@@ -218,7 +218,6 @@ true_b, b
 
 # 练习
 
-
 ```{.python .input}
 def reset_para():
     global w,b,params

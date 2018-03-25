@@ -86,17 +86,6 @@ true_w = [1.2, -3.4, 5.6]
 true_b = 5.0
 ```
 
-```{.python .input  n=10}
-from mxnet import ndarray as nd
-from mxnet import autograd
-from mxnet import gluon
-
-num_train = 100
-num_test = 100
-true_w = [1.2, -3.4, 5.6]
-true_b = 5.0
-```
-
 下面生成数据集。
 
 ```{.python .input}
@@ -106,28 +95,6 @@ y = true_w[0] * X[:, 0] + true_w[1] * X[:, 1] + true_w[2] * X[:, 2] + true_b
 y += .1 * nd.random.normal(shape=y.shape)
 
 ('x:', x[:5], 'X:', X[:5], 'y:', y[:5])
-```
-
-```{.python .input  n=2}
-x = nd.random.normal(shape=(num_train + num_test, 1))
-X = nd.concat(x, nd.power(x,2), nd.power(x, 3) )
-y = true_w[0] *X[:, 0] + true_w[1] *X[:, 1] +  true_w[2] *X[:, 2] + true_b
-y +=.1 *nd.random.normal(shape = y.shape)
-
-('x:', x[:5], 'X:', X[:5], 'y:', y[:5])
-```
-
-```{.json .output n=2}
-[
- {
-  "data": {
-   "text/plain": "('x:', \n [[2.2122064]\n  [0.7740038]\n  [1.0434405]\n  [1.1839255]\n  [1.8917114]]\n <NDArray 5x1 @cpu(0)>, 'X:', \n [[ 2.2122064   4.893857   10.826221  ]\n  [ 0.7740038   0.5990819   0.46369165]\n  [ 1.0434405   1.088768    1.1360645 ]\n  [ 1.1839255   1.4016796   1.6594843 ]\n  [ 1.8917114   3.5785718   6.769625  ]]\n <NDArray 5x3 @cpu(0)>, 'y:', \n [51.674885   6.3585763  8.949073  11.093454  33.036964 ]\n <NDArray 5 @cpu(0)>)"
-  },
-  "execution_count": 2,
-  "metadata": {},
-  "output_type": "execute_result"
- }
-]
 ```
 
 ```{.python .input  n=6}
