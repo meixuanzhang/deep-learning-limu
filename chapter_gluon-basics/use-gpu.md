@@ -12,6 +12,16 @@
 !nvidia-smi
 ```
 
+```{.json .output n=1}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.\r\n\r\n"
+ }
+]
+```
+
 接下来要要确认正确安装了的`mxnet`的GPU版本。具体来说是卸载了`mxnet`（`pip uninstall mxnet`），然后根据CUDA版本安装`mxnet-cu75`或者`mxnet-cu80`（例如`pip install --pre mxnet-cu80`）。
 
 使用pip来确认下：
