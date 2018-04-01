@@ -2,7 +2,7 @@
 
 我们仍然用MLP这个例子来详细解释如何初始化模型参数。
 
-```{.python .input  n=46}
+```{.python .input  n=1}
 from mxnet.gluon import nn
 from mxnet import nd
 

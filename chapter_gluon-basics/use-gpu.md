@@ -17,7 +17,7 @@
  {
   "name": "stdout",
   "output_type": "stream",
-  "text": "NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.\r\n\r\n"
+  "text": "Thu Mar 29 08:26:51 2018       \r\n+-----------------------------------------------------------------------------+\r\n| NVIDIA-SMI 387.26                 Driver Version: 387.26                    |\r\n|-------------------------------+----------------------+----------------------+\r\n| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |\r\n| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |\r\n|===============================+======================+======================|\r\n|   0  GeForce GT 740M     Off  | 00000000:01:00.0 N/A |                  N/A |\r\n| N/A   55C    P0    N/A /  N/A |      0MiB /  2004MiB |     N/A      Default |\r\n+-------------------------------+----------------------+----------------------+\r\n                                                                               \r\n+-----------------------------------------------------------------------------+\r\n| Processes:                                                       GPU Memory |\r\n|  GPU       PID   Type   Process name                             Usage      |\r\n|=============================================================================|\r\n|    0                    Not Supported                                       |\r\n+-----------------------------------------------------------------------------+\r\n"
  }
 ]
 ```
@@ -28,8 +28,28 @@
 
 ```{.python .input  n=2}
 import pip
-for pkg in ['mxnet', 'mxnet-cu75', 'mxnet-cu80']:
+for pkg in ['mxnet', 'mxnet-cu75', 'mxnet-cu91']:
     pip.main(['show', pkg])
+```
+
+```{.json .output n=2}
+[
+ {
+  "name": "stderr",
+  "output_type": "stream",
+  "text": "You are using pip version 9.0.1, however version 9.0.3 is available.\nYou should consider upgrading via the 'pip install --upgrade pip' command.\nYou are using pip version 9.0.1, however version 9.0.3 is available.\nYou should consider upgrading via the 'pip install --upgrade pip' command.\n"
+ },
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Name: mxnet-cu91\nVersion: 1.2.0b20180326\nSummary: MXNet is an ultra-scalable deep learning framework. This version uses CUDA-9.1.\nHome-page: https://github.com/apache/incubator-mxnet\nAuthor: UNKNOWN\nAuthor-email: UNKNOWN\nLicense: Apache 2.0\nLocation: /home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages\nRequires: graphviz, requests, numpy\n"
+ },
+ {
+  "name": "stderr",
+  "output_type": "stream",
+  "text": "You are using pip version 9.0.1, however version 9.0.3 is available.\nYou should consider upgrading via the 'pip install --upgrade pip' command.\n"
+ }
+]
 ```
 
 ## Context
@@ -39,6 +59,19 @@ MXNet使用Context来指定使用哪个设备来存储和计算。默认会将�
 ```{.python .input  n=3}
 import mxnet as mx
 [mx.cpu(), mx.gpu(), mx.gpu(1)]
+```
+
+```{.json .output n=3}
+[
+ {
+  "data": {
+   "text/plain": "[cpu(0), gpu(0), gpu(1)]"
+  },
+  "execution_count": 3,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 ## NDArray的GPU计算
@@ -51,6 +84,19 @@ x = nd.array([1,2,3])
 x.context
 ```
 
+```{.json .output n=4}
+[
+ {
+  "data": {
+   "text/plain": "cpu(0)"
+  },
+  "execution_count": 4,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
 ### GPU上创建内存
 
 我们可以在创建的时候指定创建在哪个设备上（如果GPU不能用或者没有装MXNet GPU版本，这里会有error）：
@@ -60,6 +106,19 @@ a = nd.array([1,2,3], ctx=mx.gpu())
 b = nd.zeros((3,2), ctx=mx.gpu())
 c = nd.random.uniform(shape=(2,3), ctx=mx.gpu())
 (a,b,c)
+```
+
+```{.json .output n=5}
+[
+ {
+  "data": {
+   "text/plain": "(\n [1. 2. 3.]\n <NDArray 3 @gpu(0)>, \n [[0. 0.]\n  [0. 0.]\n  [0. 0.]]\n <NDArray 3x2 @gpu(0)>, \n [[0.6686509  0.17409194 0.3850025 ]\n  [0.24678314 0.35134333 0.8404298 ]]\n <NDArray 2x3 @gpu(0)>)"
+  },
+  "execution_count": 5,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 尝试将内存开到另外一块GPU上。如果不存在会报错。当然，如果你有大于10块GPU，那么下面代码会顺利执行。
@@ -75,35 +134,85 @@ except mx.MXNetError as err:
 
 我们可以通过`copyto`和`as_in_context`来在设备直接传输数据。
 
-```{.python .input  n=7}
-y = x.copyto(mx.gpu())
+```{.python .input  n=8}
+y = x.copyto(mx.gpu())#x在cpu通过copyto传到gpu上面
 z = x.as_in_context(mx.gpu())
 (y, z)
 ```
 
+```{.json .output n=8}
+[
+ {
+  "data": {
+   "text/plain": "(\n [1. 2. 3.]\n <NDArray 3 @gpu(0)>, \n [1. 2. 3.]\n <NDArray 3 @gpu(0)>)"
+  },
+  "execution_count": 8,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
 这两个函数的主要区别是，如果源和目标的context一致，`as_in_context`不复制，而`copyto`总是会新建内存：
 
-```{.python .input  n=8}
+```{.python .input  n=9}
 yy = y.as_in_context(mx.gpu())
 zz = z.copyto(mx.gpu())
 (yy is y, zz is z)
+```
+
+```{.json .output n=9}
+[
+ {
+  "data": {
+   "text/plain": "(True, False)"
+  },
+  "execution_count": 9,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 ### GPU上的计算
 
 计算会在数据的`context`上执行。所以为了使用GPU，我们只需要事先将数据放在上面就行了。结果会自动保存在对应的设备上：
 
-```{.python .input  n=9}
+```{.python .input  n=10}
 nd.exp(z + 2) * y
+```
+
+```{.json .output n=10}
+[
+ {
+  "data": {
+   "text/plain": "\n[ 20.085537 109.1963   445.2395  ]\n<NDArray 3 @gpu(0)>"
+  },
+  "execution_count": 10,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 注意所有计算要求输入数据在同一个设备上。不一致的时候系统不进行自动复制。这个设计的目的是因为设备之间的数据交互通常比较昂贵，我们希望用户确切的知道数据放在哪里，而不是隐藏这个细节。下面代码尝试将CPU上`x`和GPU上的`y`做运算。
 
-```{.python .input  n=10}
+```{.python .input  n=12}
+import sys
 try:
     x + y
 except mx.MXNetError as err:
-    sys.stderr.write(str(err))
+    sys.stderr.write(str(err))#x在cpu,y在gpu
+```
+
+```{.json .output n=12}
+[
+ {
+  "name": "stderr",
+  "output_type": "stream",
+  "text": "[09:58:18] src/imperative/./imperative_utils.h:55: Check failed: inputs[i]->ctx().dev_mask() == ctx.dev_mask() (2 vs. 1) Operator broadcast_add require all inputs live on the same context. But the first argument is on cpu(0) while the 2-th argument is on gpu(0)\n\nStack trace returned 10 entries:\n[bt] (0) /home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/libmxnet.so(+0x2e9c82) [0x7f1471baec82]\n[bt] (1) /home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/libmxnet.so(+0x2ea258) [0x7f1471baf258]\n[bt] (2) /home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/libmxnet.so(+0x273712d) [0x7f1473ffc12d]\n[bt] (3) /home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/libmxnet.so(+0x2741061) [0x7f1474006061]\n[bt] (4) /home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/libmxnet.so(+0x26838cb) [0x7f1473f488cb]\n[bt] (5) /home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/libmxnet.so(MXImperativeInvokeEx+0x6f) [0x7f1473f48e8f]\n[bt] (6) /home/zhang/miniconda3/envs/gluon/lib/python3.6/lib-dynload/../../libffi.so.6(ffi_call_unix64+0x4c) [0x7f14b858fec0]\n[bt] (7) /home/zhang/miniconda3/envs/gluon/lib/python3.6/lib-dynload/../../libffi.so.6(ffi_call+0x22d) [0x7f14b858f87d]\n[bt] (8) /home/zhang/miniconda3/envs/gluon/lib/python3.6/lib-dynload/_ctypes.cpython-36m-x86_64-linux-gnu.so(_ctypes_callproc+0x2ce) [0x7f14b87a4dee]\n[bt] (9) /home/zhang/miniconda3/envs/gluon/lib/python3.6/lib-dynload/_ctypes.cpython-36m-x86_64-linux-gnu.so(+0x12825) [0x7f14b87a5825]\n\n"
+ }
+]
 ```
 
 ### 默认会复制回CPU的操作
@@ -112,8 +221,8 @@ except mx.MXNetError as err:
 
 ```{.python .input  n=11}
 print(y)
-print(y.asnumpy())
-print(y.sum().asscalar())
+print(y.asnumpy())#走cpu
+print(y.sum().asscalar())#走cpu
 ```
 
 ## Gluon的GPU计算
@@ -125,13 +234,13 @@ from mxnet import gluon
 net = gluon.nn.Sequential()
 net.add(gluon.nn.Dense(1))
 
-net.initialize(ctx=mx.gpu())
+net.initialize(ctx=mx.gpu())#默认是cpu
 ```
 
 输入GPU上的数据，会在GPU上计算结果
 
 ```{.python .input  n=13}
-data = nd.random.uniform(shape=[3,2], ctx=mx.gpu())
+data = nd.random.uniform(shape=[3,2], ctx=mx.gpu())#生成在gpu上的矩阵
 net(data)
 ```
 
