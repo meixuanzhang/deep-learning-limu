@@ -20,12 +20,12 @@ def vgg_block(num_convs, channels):
     return out
 ```
 
-```{.python .input}
+```{.python .input  n=5}
 from mxnet.gluon import nn
 
-def vgg_block(num_canvs, channels):
+def vgg_block(num_convs, channels):
     out = nn.Sequential()
-    for _in range(num_convs):
+    for _ in range(num_convs):
         out.add(
             nn.Conv2D(channels = channels, kernel_size=3,
                      padding=1,activation='relu')
@@ -35,6 +35,29 @@ def vgg_block(num_canvs, channels):
 ```
 
 我们实例化一个这样的块，里面有两个卷积层，每个卷积层输出通道是128：
+
+```{.python .input  n=6}
+from mxnet import nd
+
+blk = vgg_block(2, 128)
+blk.initialize()
+x = nd.random.uniform(shape=(2,3,16,16))
+y = blk(x)
+y.shape
+```
+
+```{.json .output n=6}
+[
+ {
+  "data": {
+   "text/plain": "(2, 128, 8, 8)"
+  },
+  "execution_count": 6,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
 
 ```{.python .input}
 from mxnet import nd
@@ -46,10 +69,22 @@ y = blk(x)
 y.shape
 ```
 
-```{.python .input}
-from mxnet import nd
+```{.python .input  n=8}
+k = nd.random.uniform(shape=(2,3,3,3))
+k
+```
 
-blk = vgg_block(2, 128)
+```{.json .output n=8}
+[
+ {
+  "data": {
+   "text/plain": "\n[[[[0.57432526 0.03362509 0.6532008 ]\n   [0.9689618  0.65210325 0.32099724]\n   [0.43141845 0.22126268 0.8965466 ]]\n\n  [[0.1412639  0.36756188 0.09725992]\n   [0.43586493 0.9840422  0.89192337]\n   [0.26034093 0.806194   0.53702253]]\n\n  [[0.7038886  0.44792616 0.10022689]\n   [0.09956908 0.9194826  0.35231167]\n   [0.7142413  0.46924916 0.998847  ]]]\n\n\n [[[0.84114015 0.1494483  0.90464777]\n   [0.86812603 0.03755938 0.16249293]\n   [0.50831544 0.6155596  0.16684751]]\n\n  [[0.12381998 0.779051   0.8480082 ]\n   [0.8649333  0.807319   0.4113967 ]\n   [0.56910074 0.13997258 0.4071833 ]]\n\n  [[0.03322238 0.06916699 0.98257494]\n   [0.69742876 0.37329075 0.45354268]\n   [0.42007536 0.7220556  0.05058811]]]]\n<NDArray 2x3x3x3 @cpu(0)>"
+  },
+  "execution_count": 8,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 可以看到经过一个这样的块后，长宽会减半，通道也会改变。
@@ -60,6 +95,14 @@ blk = vgg_block(2, 128)
 def vgg_stack(architecture):
     out = nn.Sequential()
     for (num_convs, channels) in architecture:
+        out.add(vgg_block(num_convs, channels))
+    return out
+```
+
+```{.python .input}
+def vgg_stack(architecture):
+    out = nn.Sequential()
+    for (num_convs, channels)in architecture:
         out.add(vgg_block(num_convs, channels))
     return out
 ```
@@ -80,6 +123,22 @@ with net.name_scope():
         nn.Dense(4096, activation="relu"),
         nn.Dropout(.5),
         nn.Dense(num_outputs))
+```
+
+```{.python .input}
+num_outputs = 10
+architecture = ((1,64),(1,128),(2,256),(2,512),(2,512))
+net.Sequential()
+with net.name_scope():
+    net.add(
+        vgg_stack(architecture),
+        nn.Flatten(),
+        nn.Dense(4049, activation = "relu"),
+        nn.Dropout(.5)
+        nn.Dense(4096,activation = "relu")
+        nn.Dropout(.5),
+        nn.Dense(num_outputs)
+    )
 ```
 
 ## 模型训练
