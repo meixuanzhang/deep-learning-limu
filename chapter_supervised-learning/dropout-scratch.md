@@ -18,7 +18,7 @@
 
 丢弃法的实现很容易，例如像下面这样。这里的标量`drop_probability`定义了一个`X`（`NDArray`类）中任何一个元素被丢弃的概率。
 
-```{.python .input}
+```{.python .input  n=1}
 from mxnet import nd
 
 def dropout(X, drop_probability):
@@ -36,19 +36,63 @@ def dropout(X, drop_probability):
     return mask * X * scale
 ```
 
+```{.python .input}
+假设数据X是n维假设keep_probability=0.5，X有一半变为0,计算期望值时候sum(X)/n,期望值变小，
+为保持期望值不变，将数据拉伸scale
+```
+
 我们运行几个实例来验证一下。
 
-```{.python .input}
+```{.python .input  n=2}
 A = nd.arange(20).reshape((5,4))
 dropout(A, 0.0)
 ```
 
-```{.python .input}
+```{.json .output n=2}
+[
+ {
+  "data": {
+   "text/plain": "\n[[ 0.  1.  2.  3.]\n [ 4.  5.  6.  7.]\n [ 8.  9. 10. 11.]\n [12. 13. 14. 15.]\n [16. 17. 18. 19.]]\n<NDArray 5x4 @cpu(0)>"
+  },
+  "execution_count": 2,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
+```{.python .input  n=5}
 dropout(A, 0.5)
 ```
 
-```{.python .input}
+```{.json .output n=5}
+[
+ {
+  "data": {
+   "text/plain": "\n[[ 0.  2.  0.  0.]\n [ 8.  0.  0.  0.]\n [16.  0.  0.  0.]\n [24.  0.  0.  0.]\n [ 0. 34. 36. 38.]]\n<NDArray 5x4 @cpu(0)>"
+  },
+  "execution_count": 5,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
+```{.python .input  n=4}
 dropout(A, 1.0)
+```
+
+```{.json .output n=4}
+[
+ {
+  "data": {
+   "text/plain": "\n[[0. 0. 0. 0.]\n [0. 0. 0. 0.]\n [0. 0. 0. 0.]\n [0. 0. 0. 0.]\n [0. 0. 0. 0.]]\n<NDArray 5x4 @cpu(0)>"
+  },
+  "execution_count": 4,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 ## 丢弃法的本质

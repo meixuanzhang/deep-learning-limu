@@ -6,7 +6,7 @@
 
 我们重新把[多层感知机 --- 使用Gluon](../chapter_supervised-learning/mlp-gluon.md)里的网络定义搬到这里作为开始的例子（为了简单起见，这里我们丢掉了Flatten层）。
 
-```{.python .input  n=1}
+```{.python .input  n=76}
 from mxnet import nd
 from mxnet.gluon import nn
 
@@ -21,7 +21,7 @@ with net.name_scope():
 print(net)
 ```
 
-```{.json .output n=1}
+```{.json .output n=76}
 [
  {
   "name": "stdout",
@@ -31,15 +31,15 @@ print(net)
 ]
 ```
 
-```{.python .input  n=15}
+```{.python .input  n=87}
 nn.Sequential??
 ```
 
-```{.python .input  n=55}
+```{.python .input  n=85}
 nn.Block??
 ```
 
-```{.python .input  n=56}
+```{.python .input  n=86}
 nn.Dense??
 ```
 
@@ -64,18 +64,6 @@ class MLP(nn.Block):
 
         return self.dense1(nd.relu(self.dense0(x)))
     #x是输入数据，self.dense0(x)是输出
-```
-
-```{.python .input  n=42}
-class MLP(nn.Block):
-    def __init__(self, **kwargs):
-        super(MLP,self).__init__(**kwargs)
-        with self.name_scope():
-            self.dens0 = nn.Dense(256)
-            self.dense1 = nn.Dense(10)
-    
-    def forward (self,x):
-        return self.dense1(nd.relu(self.dense0(x)))    
 ```
 
 可以看到`nn.Block`的使用是通过创建一个它子类的类，其中至少包含了两个函数。
@@ -157,7 +145,7 @@ print('customized prefix:', net3.dense0.name)
 
 一个简单的实现是这样的：
 
-```{.python .input}
+```{.python .input  n=101}
 class Sequential(nn.Block):
     def __init__(self, **kwargs):
         super(Sequential, self).__init__(**kwargs)
@@ -169,32 +157,9 @@ class Sequential(nn.Block):
         return x
 ```
 
-```{.python .input  n=5}
-class Sequential(nn.Block):
-    def __init__(self,**kwargs):
-        super(Sequential,self).__init__(**kwargs)
-    def add(self,block):
-        self._children.append(block)
-    def forward(self,x):
-        for block in self._children:
-            x=block(x)
-        return x
-```
-
 可以跟`nn.Sequential`一样的使用这个自定义的类：
 
-```{.python .input}
-net4 = Sequential()
-with net4.name_scope():
-    net4.add(nn.Dense(256, activation="relu"))
-    net4.add(nn.Dense(10))
-
-net4.initialize()
-y = net4(x)
-y
-```
-
-```{.python .input  n=8}
+```{.python .input  n=102}
 net4 = Sequential()
 with net.name_scope():
     net4.add(nn.Dense(256,activation="relu"))
@@ -205,15 +170,29 @@ y = net4(x)##实际调用是net4.forward()?
 y
 ```
 
-```{.json .output n=8}
+```{.json .output n=102}
 [
  {
   "data": {
-   "text/plain": "\n[[-0.00411106  0.00781806  0.03506001 -0.01106467  0.09599378 -0.04190594\n   0.01127484 -0.01493318  0.07164907  0.00700367]\n [ 0.01214234  0.02546026  0.03533492 -0.02328116  0.10768863 -0.01672857\n  -0.02653832 -0.03458688  0.0640486  -0.00030122]\n [-0.00452384  0.00228632  0.02761048 -0.05750642  0.10328891 -0.01792852\n  -0.04610601 -0.04085525  0.05824738  0.00033788]\n [-0.00518477 -0.02185423  0.02528594 -0.00436604  0.05142228 -0.02703232\n   0.01939205 -0.03802724  0.02832719 -0.0172073 ]]\n<NDArray 4x10 @cpu(0)>"
+   "text/plain": "\n[[ 0.00841137 -0.0489683  -0.01615157 -0.00888151  0.00140648  0.03107938\n   0.0066022   0.03934433  0.03551184 -0.04462051]\n [ 0.0310174  -0.01866329 -0.03238708 -0.02323047  0.01515523  0.08438477\n  -0.01215139  0.03013801  0.06884266 -0.05892515]\n [ 0.01259469 -0.00025952  0.021398   -0.04749968  0.00458046  0.06876937\n   0.04171674  0.04148455  0.05035593 -0.01429048]\n [ 0.01869043  0.0338157   0.00929088 -0.01238955 -0.02665132  0.03643298\n   0.01158281  0.03388916 -0.00470036 -0.06287378]]\n<NDArray 4x10 @cpu(0)>"
   },
-  "execution_count": 8,
+  "execution_count": 102,
   "metadata": {},
   "output_type": "execute_result"
+ }
+]
+```
+
+```{.python .input  n=103}
+print(net4)
+```
+
+```{.json .output n=103}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Sequential(\n\n)\n"
  }
 ]
 ```
@@ -235,20 +214,45 @@ class FancyMLP(nn.Block):
         return x
 ```
 
+```{.python .input  n=9}
+class FancyMLP(nn.Block):
+    def __init__(self,**kwargs):
+        super(FancyMLP, self).__init__(**kwargs)
+        with self.name_scope():
+            self.dense = nn.Dense(256)
+            self.weight = nd.random_uniform(shape=(256,20))
+            
+    def forward(self,x):
+        x=nd.relu(self.dense(x))
+        x=nd.relu(nd.dot(x,self.weight)+1)
+        x=nd.relu(self.dense(x))
+        return x
+```
+
 看到这里我们直接手动创建和初始了权重`weight`，并重复用了`dense`的层。测试一下：
 
-```{.python .input}
+```{.python .input  n=10}
 fancy_mlp = FancyMLP()
 fancy_mlp.initialize()
 y = fancy_mlp(x)
 print(y.shape)
 ```
 
+```{.json .output n=10}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "(4, 256)\n"
+ }
+]
+```
+
 ## `nn.Block`和`nn.Sequential`的嵌套使用
 
 现在我们知道了`nn`下面的类基本都是`nn.Block`的子类，他们可以很方便地嵌套使用。
 
-```{.python .input}
+```{.python .input  n=11}
 class RecMLP(nn.Block):
     def __init__(self, **kwargs):
         super(RecMLP, self).__init__(**kwargs)
@@ -265,6 +269,86 @@ rec_mlp = nn.Sequential()
 rec_mlp.add(RecMLP())
 rec_mlp.add(nn.Dense(10))
 print(rec_mlp)
+```
+
+```{.json .output n=11}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Sequential(\n  (0): RecMLP(\n    (net): Sequential(\n      (0): Dense(None -> 256, Activation(relu))\n      (1): Dense(None -> 128, Activation(relu))\n    )\n    (dense): Dense(None -> 64, linear)\n  )\n  (1): Dense(None -> 10, linear)\n)\n"
+ }
+]
+```
+
+```{.python .input  n=78}
+class RecMLP(nn.Block):
+    def __init__(self,**kwargs):
+        super(RecMLP,self).__init__(**kwargs)
+        with self.name_scope():
+            self.dense=[nn.Dense(256), nn.Dense(128), nn.Dense(64)]
+            self.dense0= nn.Dense(64)
+    def forward(self,x):
+        for dense in self.denses:
+            x=dense(x)
+        return x
+```
+
+```{.python .input  n=79}
+net = RecMLP()
+print(net)
+net.initialize()
+print(net)
+```
+
+```{.json .output n=79}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "RecMLP(\n  (dense0): Dense(None -> 64, linear)\n)\nRecMLP(\n  (dense0): Dense(None -> 64, linear)\n)\n"
+ },
+ {
+  "name": "stderr",
+  "output_type": "stream",
+  "text": "/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/block.py:229: UserWarning: \"RecMLP.dense\" is a container with Blocks. Note that Blocks inside the list, tuple or dict will not be registered automatically. Make sure to register them using register_child() or switching to nn.Sequential/nn.HybridSequential instead. \n  .format(name=self.__class__.__name__ + \".\" + k))\n"
+ }
+]
+```
+
+```{.python .input  n=98}
+class RecMLP(nn.Block):
+    def __init__(self,**kwargs):
+        super(RecMLP,self).__init__(**kwargs)
+        self.dense0= nn.Dense(64)
+        self._children.append(nn.Dense(65))
+
+    def __repr__(self):
+        s = '{name}(\n{modstr}\n)'
+        modstr = '\n'.join(['  ({key}): {block}'.format(key=key,
+                                                        block=block.__repr__())
+                            for key, block in enumerate(self._children)
+                            if isinstance(block, nn.Block)])
+        return s.format(name=self.__class__.__name__,
+                        modstr=modstr)
+```
+
+```{.python .input  n=99}
+net = RecMLP()
+```
+
+```{.python .input  n=100}
+print(net)
+```
+
+```{.json .output n=100}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "RecMLP(\n  (0): Dense(None -> 64, linear)\n  (1): Dense(None -> 65, linear)\n)\n"
+ }
+]
 ```
 
 ## 总结

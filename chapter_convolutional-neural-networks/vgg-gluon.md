@@ -20,6 +20,20 @@ def vgg_block(num_convs, channels):
     return out
 ```
 
+```{.python .input}
+from mxnet.gluon import nn
+
+def vgg_block(num_canvs, channels):
+    out = nn.Sequential()
+    for _in range(num_convs):
+        out.add(
+            nn.Conv2D(channels = channels, kernel_size=3,
+                     padding=1,activation='relu')
+        )
+    out.add(nn.MaxPool2D(pool_size=2, strides=2))
+    return out
+```
+
 我们实例化一个这样的块，里面有两个卷积层，每个卷积层输出通道是128：
 
 ```{.python .input}
@@ -30,6 +44,12 @@ blk.initialize()
 x = nd.random.uniform(shape=(2,3,16,16))
 y = blk(x)
 y.shape
+```
+
+```{.python .input}
+from mxnet import nd
+
+blk = vgg_block(2, 128)
 ```
 
 可以看到经过一个这样的块后，长宽会减半，通道也会改变。

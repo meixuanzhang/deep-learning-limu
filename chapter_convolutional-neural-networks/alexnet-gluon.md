@@ -67,8 +67,41 @@ Sutskever实现的可以运行在GPU上的深度卷积网络成为重大突破�
 下面的Gluon代码定义了（稍微简化过的）Alexnet：
 
 ```{.python .input}
-from mxnet.gluon import nn
+form mxnet.gluon import nn
+net = nn.Sequential()
+with net.name_scope():
+    net.add(
+        nn.Conv2D(channels = 96, kernel_size = 11, 
+                 strides = 4, activation = 'relu'),
+        nn.MaxPool2D(pool_size = 3, stride = 2),
+        
+        nn.Conv2D(channels = 256 ,kernel_size = 5,
+                 padding = 2, activation = 'relu'),
+        nn.MaxPool2D(pool_size = 3, stride = 2),
+        
+        nn.Conv2D(channels = 384, kernel_size = 3,
+                 padding = 1,activation = 'relu'),
+        nn.Conv2D(channels = 384, kernel =3,
+                 padding = 1,activation = 'relu'),
+        nn.Conv2D(channels = 256, kernel_size = 3,
+                 padding = 1,activation = 'relu'),
+        nn.MaxPool2D(pool_size = 3,strides = 2),
+        
+        nn.Flatten(),
+        nn.Dense(4096, activation = 'relu'),
+        nn.Droput(.5),
+        
+        nn.Dense(40956,activation = 'relu'),
+        nn.Droput(.5),
+        nn.Dense(10)
+        
+        
+        
+    )
+```
 
+```{.python .input  n=1}
+from mxnet.gluon import nn
 net = nn.Sequential()
 with net.name_scope():
     net.add(
@@ -104,13 +137,23 @@ with net.name_scope():
 
 Alexnet使用Imagenet数据，其中输入图片大小一般是$224 \times 224$。因为Imagenet数据训练时间过长，我们还是用前面的FashionMNIST来演示。读取数据的时候我们额外做了一步将数据扩大到原版Alexnet使用的$224 \times 224$。
 
-```{.python .input}
+```{.python .input  n=2}
 import sys
 sys.path.append('..')
 import utils
 
 train_data, test_data = utils.load_data_fashion_mnist(
     batch_size=64, resize=224)
+```
+
+```{.json .output n=2}
+[
+ {
+  "name": "stderr",
+  "output_type": "stream",
+  "text": "/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:84: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  label = np.fromstring(fin.read(), dtype=np.uint8).astype(np.int32)\n/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:88: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  data = np.fromstring(fin.read(), dtype=np.uint8)\n"
+ }
+]
 ```
 
 ## 训练
@@ -130,9 +173,33 @@ net.initialize(ctx=ctx, init=init.Xavier())
 
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 trainer = gluon.Trainer(net.collect_params(),
+                        'sgd',{'learning_rate':0.01})
+
+utils.train(train_data, test_data, net, loss, trainer, ctx, num_epochs=1)
+```
+
+```{.python .input}
+from mxnet import init
+from mxnet import gluon
+
+ctx = utils.try_gpu()
+net.initialize(ctx=ctx, init=init.Xavier())
+
+loss = gluon.loss.SoftmaxCrossEntropyLoss()
+trainer = gluon.Trainer(net.collect_params(),
                         'sgd', {'learning_rate': 0.01})
 utils.train(train_data, test_data, net, loss,
             trainer, ctx, num_epochs=1)
+```
+
+```{.json .output n=None}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Start training on  cpu(0)\n"
+ }
+]
 ```
 
 ## 结论

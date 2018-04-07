@@ -17,7 +17,7 @@
  {
   "name": "stdout",
   "output_type": "stream",
-  "text": "Thu Mar 29 08:26:51 2018       \r\n+-----------------------------------------------------------------------------+\r\n| NVIDIA-SMI 387.26                 Driver Version: 387.26                    |\r\n|-------------------------------+----------------------+----------------------+\r\n| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |\r\n| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |\r\n|===============================+======================+======================|\r\n|   0  GeForce GT 740M     Off  | 00000000:01:00.0 N/A |                  N/A |\r\n| N/A   55C    P0    N/A /  N/A |      0MiB /  2004MiB |     N/A      Default |\r\n+-------------------------------+----------------------+----------------------+\r\n                                                                               \r\n+-----------------------------------------------------------------------------+\r\n| Processes:                                                       GPU Memory |\r\n|  GPU       PID   Type   Process name                             Usage      |\r\n|=============================================================================|\r\n|    0                    Not Supported                                       |\r\n+-----------------------------------------------------------------------------+\r\n"
+  "text": "NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.\r\n\r\n"
  }
 ]
 ```
