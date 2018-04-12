@@ -37,6 +37,7 @@ from mxnet import nd
 def pure_batch_norm(X, gamma, beta, eps=1e-5):
     assert len(X.shape) in (2, 4)
     # 全连接: batch_size x feature
+    #CNN:batch_size, in_channels(不同权重), height, width
     if len(X.shape) == 2:
         # 每个输入维度在样本上的平均和方差
         mean = X.mean(axis=0)
@@ -45,7 +46,8 @@ def pure_batch_norm(X, gamma, beta, eps=1e-5):
     else:
         # 对每个通道算均值和方差，需要保持4D形状使得可以正确地广播
         mean = X.mean(axis=(0,2,3), keepdims=True)
-        variance = ((X - mean)**2).mean(axis=(0,2,3), keepdims=True)
+        variance = ((X - mean)**2).mean(axis=(0,2,3), keepdims=True) #数组有4层，第四层是width，第三层是height，第二层是channel，第一层是batch_size 
+        print(variance)
 
     # 均一化
     X_hat = (X - mean) / nd.sqrt(variance + eps)
@@ -53,30 +55,138 @@ def pure_batch_norm(X, gamma, beta, eps=1e-5):
     return gamma.reshape(mean.shape) * X_hat + beta.reshape(mean.shape)
 ```
 
+```{.python .input}
+from mxnet import nd 
+def pure_batch_norm(X, gamma, beta, eps=le-5):
+    assert len(X.shape) in(2,4)
+    if len(X.shape)==2:
+        mean = X.shape(axis=0)
+        Variance = ((X - mean)**2).mean(axis=0)
+    else:
+        mean = X.mean((axis=(0,2,3),keepdim=True))
+        variance = ((X-mean)**2).mean(axis=(0,2,3),keepdims=True)
+        print(variance)
+        
+    X_hat = (X-mean)/nd.sqrt(variance+eps)
+    return gamma.reshape(mean.shape)*X_hat+beta.reshape(mean.shape)
+```
+
 下面我们检查一下。我们先定义全连接层的输入是这样的。每一行是批量中的一个实例。
 
-```{.python .input  n=2}
+```{.python .input  n=10}
 A = nd.arange(6).reshape((3,2))
 A
 ```
 
+```{.json .output n=10}
+[
+ {
+  "data": {
+   "text/plain": "\n[[0. 1.]\n [2. 3.]\n [4. 5.]]\n<NDArray 3x2 @cpu(0)>"
+  },
+  "execution_count": 10,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
 我们希望批量中的每一列都被归一化。结果符合预期。
 
-```{.python .input  n=3}
+```{.python .input  n=11}
 pure_batch_norm(A, gamma=nd.array([1,1]), beta=nd.array([0,0]))
+```
+
+```{.json .output n=11}
+[
+ {
+  "data": {
+   "text/plain": "\n[[-1.2247427 -1.2247427]\n [ 0.         0.       ]\n [ 1.2247427  1.2247427]]\n<NDArray 3x2 @cpu(0)>"
+  },
+  "execution_count": 11,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 下面我们定义二维卷积网络层的输入是这样的。
 
-```{.python .input  n=4}
+```{.python .input  n=7}
 B = nd.arange(18).reshape((1,2,3,3))
 B
 ```
 
+```{.json .output n=7}
+[
+ {
+  "data": {
+   "text/plain": "\n[[[[ 0.  1.  2.]\n   [ 3.  4.  5.]\n   [ 6.  7.  8.]]\n\n  [[ 9. 10. 11.]\n   [12. 13. 14.]\n   [15. 16. 17.]]]]\n<NDArray 1x2x3x3 @cpu(0)>"
+  },
+  "execution_count": 7,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
 结果也如预期那样，我们对每个通道做了归一化。
 
-```{.python .input  n=5}
+```{.python .input  n=8}
 pure_batch_norm(B, gamma=nd.array([1,1]), beta=nd.array([0,0]))
+```
+
+```{.json .output n=8}
+[
+ {
+  "data": {
+   "text/plain": "\n[[[[-1.5491922  -1.1618942  -0.7745961 ]\n   [-0.38729805  0.          0.38729805]\n   [ 0.7745961   1.1618942   1.5491922 ]]\n\n  [[-1.5491922  -1.1618942  -0.7745961 ]\n   [-0.38729805  0.          0.38729805]\n   [ 0.7745961   1.1618942   1.5491922 ]]]]\n<NDArray 1x2x3x3 @cpu(0)>"
+  },
+  "execution_count": 8,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
+```{.python .input  n=12}
+B = nd.arange(36).reshape((2,2,3,3)) #同一个通道（同一个w）标准化，
+B
+```
+
+```{.json .output n=12}
+[
+ {
+  "data": {
+   "text/plain": "\n[[[[ 0.  1.  2.]\n   [ 3.  4.  5.]\n   [ 6.  7.  8.]]\n\n  [[ 9. 10. 11.]\n   [12. 13. 14.]\n   [15. 16. 17.]]]\n\n\n [[[18. 19. 20.]\n   [21. 22. 23.]\n   [24. 25. 26.]]\n\n  [[27. 28. 29.]\n   [30. 31. 32.]\n   [33. 34. 35.]]]]\n<NDArray 2x2x3x3 @cpu(0)>"
+  },
+  "execution_count": 12,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
+```{.python .input  n=13}
+pure_batch_norm(B, gamma=nd.array([1,1]), beta=nd.array([0,0]))
+```
+
+```{.json .output n=13}
+[
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "\n[[[[87.666664]]\n\n  [[87.666664]]]]\n<NDArray 1x2x1x1 @cpu(0)>\n"
+ },
+ {
+  "data": {
+   "text/plain": "\n[[[[-1.3884367  -1.2816339  -1.174831  ]\n   [-1.0680282  -0.9612254  -0.85442257]\n   [-0.74761975 -0.6408169  -0.5340141 ]]\n\n  [[-1.3884367  -1.2816339  -1.174831  ]\n   [-1.0680282  -0.9612254  -0.85442257]\n   [-0.74761975 -0.6408169  -0.5340141 ]]]\n\n\n [[[ 0.5340141   0.6408169   0.74761975]\n   [ 0.85442257  0.9612254   1.0680282 ]\n   [ 1.174831    1.2816339   1.3884367 ]]\n\n  [[ 0.5340141   0.6408169   0.74761975]\n   [ 0.85442257  0.9612254   1.0680282 ]\n   [ 1.174831    1.2816339   1.3884367 ]]]]\n<NDArray 2x2x3x3 @cpu(0)>"
+  },
+  "execution_count": 13,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 ## 批量归一化层
@@ -91,7 +201,32 @@ pure_batch_norm(B, gamma=nd.array([1,1]), beta=nd.array([0,0]))
 
 为了方便讨论批量归一化层的实现，我们先看下面这段代码来理解``Python``变量可以如何修改。
 
-```{.python .input  n=7}
+```{.python .input}
+def batch_norm(X, gamma,beta, is_training, _moving_mean, moving_variance, eps = 1e-5, moving_mometum = 0.9):
+    assert len(X.shape) in (2,4)
+    
+    if len(X.shape)==2:
+        mean = X.mean(axis= 0)
+        variance=((X-mean)**2).mean(axis=0)
+    else:
+        mean = X.mean(axis=(0,2,3),keepdims=True)
+        variance=((X-mean)**2).mean(axis=(0,2,3),keepdims=True)
+        
+        moving_mean = moving_mean.reshape(mean.shape)
+        moving_variance = moving_variance.reshape(mean.shape)
+        
+    if is_training:
+        X_hat = (X-mean)/nd.sqrt(variance+eps)
+        moving_mean[:] = moving_momentum*moving_mean +(
+        1.0-moving_momentum)*mean
+        moving_variance[:]= moving_momentum*moving_variance+(
+        1.0-moving_momentum)*variance
+    else:
+        X_hat= (X-moving_mean)/nd.sqrt(moving_variance + eps)
+    return gamma.reshape(mean.shape) * X_hat + beta.reshape(mean.shape)
+```
+
+```{.python .input  n=2}
 def batch_norm(X, gamma, beta, is_training, moving_mean, moving_variance,
                eps = 1e-5, moving_momentum = 0.9):
     assert len(X.shape) in (2, 4)
@@ -129,7 +264,7 @@ def batch_norm(X, gamma, beta, is_training, moving_mean, moving_variance,
 
 我们尝试使用GPU运行本教程代码。
 
-```{.python .input  n=8}
+```{.python .input  n=3}
 import sys
 sys.path.append('..')
 import utils
@@ -137,9 +272,57 @@ ctx = utils.try_gpu()
 ctx
 ```
 
+```{.json .output n=3}
+[
+ {
+  "data": {
+   "text/plain": "gpu(0)"
+  },
+  "execution_count": 3,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
 先定义参数。
 
-```{.python .input  n=9}
+```{.python .input}
+c1 = 20
+W1 = nd.random.normal(shape=(c1,1,5,5), scale=weight_scale, ctx=ctx)
+b1 = nd.zeros(c1, ctx=ctx)
+ 
+gammal = nd.random.normal(shape=c1, scale=weight_scale, ctx=ctx)
+betal = nd.random.normal(shape=c1, scale=weight_scale, ctx=ctx)
+moving_mean1 = nd.zeros(c1, tx=ctx)
+moving_variance = nd.zeros(c1, ctx=ctx)
+
+c2 = 50
+W2 = nd.random_normal(shape=(c2,c1,3,3), scale=weight_scale, ctx=ctx)
+b2 = nd.zeros(c2,ctx=ctx)
+
+gamma2 = nd.random.normal(shape=c2, scale=weight_scale, ctx=ctx)
+beta2 = nd.random.normal(shape=c2, scale=weight_scale, ctx=ctx)
+moving_mean2 = nd.zeros(c2, ctx=ctx)
+moving_variance2 = nd.zeros(c2, ctx=ctx)
+
+o3=128
+W3 = nd.random.normal(shape=(1258,o3), scale=weight_scale,ctx=ctx)
+b3 = nd.zeros(o3, ctx=ctx)
+
+W4 = nd.random.normal(shape=(1250,o3), scale=weight_scale, ctx=ctx)
+b4 = nd.zeros(W4.shape[1], ctx=ctx)
+
+params = [W1,b1,gamma1,beta1
+          W2,b2,gamma2,beta2
+          W3,b3,
+          W4,b4]
+
+for param in params:
+    param.attach_grad()
+```
+
+```{.python .input  n=4}
 weight_scale = .01
 
 # 输出通道 = 20, 卷积核 = (5,5)
@@ -184,7 +367,44 @@ for param in params:
 
 下面定义模型。我们添加了批量归一化层。特别要注意我们添加的位置：在卷积层后，在激活函数前。
 
-```{.python .input  n=10}
+```{.python .input}
+def net(X,is_training=False, verbose=False):
+    X = X.as_in_context(W1.context)
+    
+    h1_conv = nd.Convolution(
+        data = X, weight=W1,bias=b1, kernel=W1.shape[2:],num_filter=c1)
+    
+    h1_bn = batch_normal(h1_conv, gamma1,beta1, is_training,moving_mean1, moving_variance1)
+    
+    h1_activation = nd.relu(h1_bn)
+    
+    h1 = nd.Pooling(
+    data = h1_activation, pool_type="max",kernel=(2,2),stride=(2,2))
+    
+    h2_conv= nd.Convolution(
+        data=h1, weight=W2,bias=b2, kernel=W2.shape[2:],num_filter=c2)
+    h2_bn = batch_norm(h2_conv,gamma2,beta2, is_training,
+                      moving_mean2,moving_variance2)
+    h2_activation = nd.relu(h2_bn)
+    h2 = nd.Pooling(data=h2_activation,pool_type="max",kernel=(2,2),stride=(2,2))
+    
+    h2 = nd.flatten(h2)
+    
+    h3_linear = nd.dot(h2,W3)+b3
+    h3 = nd.relu(h3_linear)
+    
+    h4_linear = nd.dot(h3,W4)+b4
+    
+    if verbose:
+        print('1st conv block:', h1.shape)
+        print('2nd conv block', h2.shape)
+        print('1st dense:',h3.shape)
+        print('2nd dense:',h4_linear.shape)
+        print('output:', h4_linear)
+    return h4_linear
+```
+
+```{.python .input  n=5}
 def net(X, is_training=False, verbose=False):
     X = X.as_in_context(W1.context)
     # 第一层卷积
@@ -221,7 +441,37 @@ def net(X, is_training=False, verbose=False):
 
 下面我们训练并测试模型。
 
-```{.python .input  n=11}
+```{.python .input}
+from mxnet import autograd
+from mxnet import gluon
+
+batch_size = 256
+train_data, test_data=utils.load_data_fashion_mnist(batch_size)
+
+softmax_cross_entropy = gluon.loss.SoftmaxCrossENtropyLoss()
+
+learning_rate = 0.2
+
+for epoch in range(5):
+    train_loss=0.
+    train_acc=0.
+    for data,label in train_data:
+        label = label.as_in_context(ctx)
+        with autograd.record():
+            output  = net(data, is_training=True)
+            loss = softmax_cross_entropy(output, label)
+        loss.backward()
+        utils.SGD(params,learning_rate/batch_size)
+        
+        train_loss +=nd.mean(loss).asscalar()
+        train_acc +=utils.accuracy(output,label)
+    test_acc = utils.evaluate_accuracy(test_data, net, ctx)
+    print("Epoch %d. Loss: %f, Train acc %f, Test acc %f" % (
+            epoch, train_loss/len(train_data), train_acc/len(train_data), test_acc))
+    
+```
+
+```{.python .input  n=6}
 from mxnet import autograd
 from mxnet import gluon
 
@@ -249,6 +499,21 @@ for epoch in range(5):
     test_acc = utils.evaluate_accuracy(test_data, net, ctx)
     print("Epoch %d. Loss: %f, Train acc %f, Test acc %f" % (
             epoch, train_loss/len(train_data), train_acc/len(train_data), test_acc))
+```
+
+```{.json .output n=6}
+[
+ {
+  "name": "stderr",
+  "output_type": "stream",
+  "text": "/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:84: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  label = np.fromstring(fin.read(), dtype=np.uint8).astype(np.int32)\n/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:88: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  data = np.fromstring(fin.read(), dtype=np.uint8)\n"
+ },
+ {
+  "name": "stdout",
+  "output_type": "stream",
+  "text": "Epoch 0. Loss: 2.067757, Train acc 0.234342, Test acc 0.635216\nEpoch 1. Loss: 0.580999, Train acc 0.776960, Test acc 0.802985\nEpoch 2. Loss: 0.417414, Train acc 0.844501, Test acc 0.868389\nEpoch 3. Loss: 0.353107, Train acc 0.868957, Test acc 0.873898\nEpoch 4. Loss: 0.320843, Train acc 0.882028, Test acc 0.851262\n"
+ }
+]
 ```
 
 ## 总结

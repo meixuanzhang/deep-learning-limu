@@ -146,16 +146,6 @@ train_data, test_data = utils.load_data_fashion_mnist(
     batch_size=64, resize=224)
 ```
 
-```{.json .output n=2}
-[
- {
-  "name": "stderr",
-  "output_type": "stream",
-  "text": "/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:84: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  label = np.fromstring(fin.read(), dtype=np.uint8).astype(np.int32)\n/home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages/mxnet/gluon/data/vision/datasets.py:88: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead\n  data = np.fromstring(fin.read(), dtype=np.uint8)\n"
- }
-]
-```
-
 ## 训练
 
 这时候我们可以开始训练。相对于前面的LeNet，我们做了如下三个改动：
@@ -178,7 +168,7 @@ trainer = gluon.Trainer(net.collect_params(),
 utils.train(train_data, test_data, net, loss, trainer, ctx, num_epochs=1)
 ```
 
-```{.python .input}
+```{.python .input  n=3}
 from mxnet import init
 from mxnet import gluon
 
@@ -190,16 +180,6 @@ trainer = gluon.Trainer(net.collect_params(),
                         'sgd', {'learning_rate': 0.01})
 utils.train(train_data, test_data, net, loss,
             trainer, ctx, num_epochs=1)
-```
-
-```{.json .output n=None}
-[
- {
-  "name": "stdout",
-  "output_type": "stream",
-  "text": "Start training on  cpu(0)\n"
- }
-]
 ```
 
 ## 结论

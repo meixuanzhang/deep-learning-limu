@@ -10,6 +10,10 @@ Alexnet之后一个重要的工作是[Network in Network（NiN）](https://arxiv
 
 下面代码定义一个这样的块，它由一个正常的卷积层接上两个kernel是$1 \times 1$的卷积层构成。后面两个充当两个全连接层的角色。
 
+```{.python .input}
+kernel 1*1,在channel上做个全链接的dense层，模块的一列结果作为dense一个pixel
+```
+
 ```{.python .input  n=2}
 from mxnet.gluon import nn
 

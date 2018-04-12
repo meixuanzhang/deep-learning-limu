@@ -17,7 +17,7 @@
  {
   "name": "stdout",
   "output_type": "stream",
-  "text": "NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.\r\n\r\n"
+  "text": "Mon Apr  9 07:59:19 2018       \r\n+-----------------------------------------------------------------------------+\r\n| NVIDIA-SMI 387.26                 Driver Version: 387.26                    |\r\n|-------------------------------+----------------------+----------------------+\r\n| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |\r\n| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |\r\n|===============================+======================+======================|\r\n|   0  GeForce GT 740M     Off  | 00000000:01:00.0 N/A |                  N/A |\r\n| N/A   45C    P0    N/A /  N/A |      0MiB /  2004MiB |     N/A      Default |\r\n+-------------------------------+----------------------+----------------------+\r\n                                                                               \r\n+-----------------------------------------------------------------------------+\r\n| Processes:                                                       GPU Memory |\r\n|  GPU       PID   Type   Process name                             Usage      |\r\n|=============================================================================|\r\n|    0                    Not Supported                                       |\r\n+-----------------------------------------------------------------------------+\r\n"
  }
 ]
 ```
@@ -35,19 +35,9 @@ for pkg in ['mxnet', 'mxnet-cu75', 'mxnet-cu91']:
 ```{.json .output n=2}
 [
  {
-  "name": "stderr",
-  "output_type": "stream",
-  "text": "You are using pip version 9.0.1, however version 9.0.3 is available.\nYou should consider upgrading via the 'pip install --upgrade pip' command.\nYou are using pip version 9.0.1, however version 9.0.3 is available.\nYou should consider upgrading via the 'pip install --upgrade pip' command.\n"
- },
- {
   "name": "stdout",
   "output_type": "stream",
-  "text": "Name: mxnet-cu91\nVersion: 1.2.0b20180326\nSummary: MXNet is an ultra-scalable deep learning framework. This version uses CUDA-9.1.\nHome-page: https://github.com/apache/incubator-mxnet\nAuthor: UNKNOWN\nAuthor-email: UNKNOWN\nLicense: Apache 2.0\nLocation: /home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages\nRequires: graphviz, requests, numpy\n"
- },
- {
-  "name": "stderr",
-  "output_type": "stream",
-  "text": "You are using pip version 9.0.1, however version 9.0.3 is available.\nYou should consider upgrading via the 'pip install --upgrade pip' command.\n"
+  "text": "Name: mxnet\nVersion: 1.2.0b20180407\nSummary: MXNet is an ultra-scalable deep learning framework. This version uses openblas.\nHome-page: https://github.com/apache/incubator-mxnet\nAuthor: UNKNOWN\nAuthor-email: UNKNOWN\nLicense: Apache 2.0\nLocation: /home/zhang/miniconda3/envs/gluon/lib/python3.6/site-packages\nRequires: requests, graphviz, numpy\n"
  }
 ]
 ```
