@@ -14,6 +14,25 @@ Alexnet之后一个重要的工作是[Network in Network（NiN）](https://arxiv
 kernel 1*1,在channel上做个全链接的dense层，模块的一列结果作为dense一个pixel
 ```
 
+```{.python .input}
+from mxnet.gluon import nn
+
+def mlpconv(channels,kernel_size,padding,
+           stride=1,max_pooling=True):
+    out = nn.Sequential()
+    out.add(
+        nn.COnv2D(channels=channels, kernel_size=kernel_size,
+                 strides=strides,padding=padding,
+                 activation="relu")
+        nn.Conv2D(channels=channels,kernel_size=1，
+                 padding=0,strides=1,activation='relu'),
+        nn.Conv2d(channels=channels,kernel_size=1,
+                 padding=0,stride=1,activation='relu'))
+    if max_pooling:
+        out.add(nn.MaxPool2D(pool_size=3,strides=2))
+    return out
+```
+
 ```{.python .input  n=2}
 from mxnet.gluon import nn
 
@@ -25,12 +44,23 @@ def mlpconv(channels, kernel_size, padding,
                   strides=strides, padding=padding,
                   activation='relu'),
         nn.Conv2D(channels=channels, kernel_size=1,
-                  padding=0, strides=1, activation='relu'),
+                  padding=0, strides=1, activation='relu'),#3类似D一列上全链接，每列共享权重
         nn.Conv2D(channels=channels, kernel_size=1,
                   padding=0, strides=1, activation='relu'))
     if max_pooling:
         out.add(nn.MaxPool2D(pool_size=3, strides=2))
     return out
+```
+
+```{.python .input}
+from mxnet import nd
+
+blk=mlpconv(64,3,0)
+blk.initialize()
+
+x = nd.random.uniform(shape=(32,3,16,16))
+y = blk(x)
+y.shape
 ```
 
 测试一下：
@@ -54,6 +84,23 @@ NiN的卷积层的参数跟Alexnet类似，使用三组不同的设定
 
 除了使用了$1\times 1$卷积外，NiN在最后不是使用全连接，而是使用通道数为输出类别个数的`mlpconv`，外接一个平均池化层来将每个通道里的数值平均成一个标量。
 
+```{.python .input}
+net = nn.Sequential()
+
+with net.name_scope():
+    net.add(
+        mlpconv(96,11,0,strides=4),
+        mlpconv(256,5,2),
+        mlpconv(384,3,1),
+        nn.Dropout(.5),
+        mlpconv(10,3,1,max_pooling=False),
+        nn.GlobalAvgPOol2D(),
+        nn.Flatten()
+    )
+```
+
+传统的CNN最后一层都是全连接层，参数个数非常之多，容易引起过拟合（如Alexnet），一个CNN模型，大部分的参数都被全连接层给占用了，所以论文提出采用了全局均值池化替代全连接层。与传统的全连接层不同，我们对每个特征图一整张图片进行全局均值池化，这样每张特征图都可以得到一个输出。这样采用均值池化，连参数都省了，可以大大减小网络参数，避免过拟合，另一方面它有一个特点，每张特征图相当于一个输出特征，然后这个特征就表示了我们输出类的特征。
+
 ```{.python .input  n=9}
 net = nn.Sequential()
 # add name_scope on the outer most Sequential
@@ -74,6 +121,27 @@ with net.name_scope():
         nn.Flatten()
     )
 
+```
+
+```{.python .input}
+import sys
+sys.path.append('..')
+
+from mxnet import gluon
+from mxnet import init
+
+train_data, test_data = utils.load_data_fashion_mnist(
+    batch_size=64,resize=224)
+
+ctx=utils.try_gpu()
+
+net.initialize(ctx=ctx,init=init.Xavier())
+
+loss=gluon.loss.SofemaxCrossEntropyLOss()
+trainer=gluon.Trainer(net.collect_params(),
+                     'sgd',{'learning_rate':0.1})
+
+utils.train(train_data,test_data,net,loss,trainer,ctx,num_epochs=1)
 ```
 
 ## 获取数据并训练

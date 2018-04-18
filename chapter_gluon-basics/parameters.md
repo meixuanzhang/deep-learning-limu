@@ -99,7 +99,7 @@ print('bias gradient', b.grad())
 我们也可以通过`collect_params`来访问Block里面所有的参数（这个会包括所有的子Block）。它会返回一个名字到对应Parameter的dict。既可以用正常`[]`来访问参数，也可以用`get()`，它不需要填写名字的前缀。
 
 ```{.python .input  n=7}
-params = net.collect_params()
+params = net.collect_params() #返回的是class mxnet.gluon.ParameterDict 
 print(params)
 print(params['sequential0_dense0_bias'].data())
 print(params.get('dense0_weight').data())

@@ -61,7 +61,6 @@ class MLP(nn.Block):
             self.dense1 = nn.Dense(10)
 
     def forward(self, x):
-
         return self.dense1(nd.relu(self.dense0(x)))
     #x是输入数据，self.dense0(x)是输出
 ```
@@ -360,3 +359,14 @@ print(net)
 如果把`RecMLP`改成`self.denses = [nn.Dense(256), nn.Dense(128), nn.Dense(64)]`，`forward`就用for loop来实现，会有什么问题吗？
 
 **吐槽和讨论欢迎点**[这里](https://discuss.gluon.ai/t/topic/986)
+
+```{.python .input}
+看源码后发现原因为: [nn.Dense(256), nn.Dense(128), nn.Dense(64)] 的 type 是 list, 而不是 Block, 这样就不会被自动注册到 Block 类的 self._children 属性, 导致 initialize 时在 self._children 找不到神经元, 无法初始化参数.
+
+    当执行 self.xxx = yyy 时, __setattr__ 方法会检测 yyy 是否为 Block 类型, 如果是则添加到 self._children 列表中.
+    当执行 initialize() 时, 会从 self._children 中找神经元.
+
+详情见源码 Block 类的 __setattr__ 和 initialize 方法:
+    
+https://www.cnblogs.com/elie/p/6685429.html
+```

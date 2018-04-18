@@ -21,14 +21,14 @@ class Inception(nn.Block):
         self.p1_conv_1 = nn.Conv2D(n1_1, kernel_size=1,
                                    activation='relu')
         # path 2
-        self.p2_conv_1 = nn.Conv2D(n2_1, kernel_size=1,
+        self.p2_conv_1 = nn.Conv2D(n2_1, kernel_size=1,#压缩channel,降维
                                    activation='relu')
         self.p2_conv_3 = nn.Conv2D(n2_3, kernel_size=3, padding=1,
                                    activation='relu')
         # path 3
         self.p3_conv_1 = nn.Conv2D(n3_1, kernel_size=1,
                                    activation='relu')
-        self.p3_conv_5 = nn.Conv2D(n3_5, kernel_size=5, padding=2,
+        self.p3_conv_5 = nn.Conv2D(n3_5, kernel_size=5, padding=2,#padding 使得输入和输出维度一致为了后面的concat
                                    activation='relu')
         # path 4
         self.p4_pool_3 = nn.MaxPool2D(pool_size=3, padding=1,
@@ -41,7 +41,7 @@ class Inception(nn.Block):
         p2 = self.p2_conv_3(self.p2_conv_1(x))
         p3 = self.p3_conv_5(self.p3_conv_1(x))
         p4 = self.p4_conv_1(self.p4_pool_3(x))
-        return nd.concat(p1, p2, p3, p4, dim=1)
+        return nd.concat(p1, p2, p3, p4, dim=1)#dim 按照channel合并
 ```
 
 可以看到Inception里有四个并行的线路。
@@ -56,7 +56,7 @@ class Inception(nn.Block):
 测试一下：
 
 ```{.python .input}
-incp = Inception(64, 96, 128, 16, 32, 32)
+incp = Inception(64, 96, 128, 16, 32, 32)#contat后是256维
 incp.initialize()
 
 x = nd.random.uniform(shape=(32,3,64,64))
