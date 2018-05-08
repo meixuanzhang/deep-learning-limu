@@ -1,0 +1,18 @@
+    #PoolQC替代为‘No’
+    #MiscFeature替代为‘No’
+    #Alley替代为‘No’
+    #Fence替代为‘No’
+    #FireplaceQu替代为'No'
+LotFrontage
+    #GarageType替代为'No'
+    #GarageYrBlt
+    #GarageFinish
+    #GarageQual
+    #GarageCond
+    #BsmtExposure
+    #BsmtFinType2
+    #BsmtQual
+    #BsmtCond
+    #BsmtFinType1替代为'No'
+
+    #Electrical替代为 'SBrkr'

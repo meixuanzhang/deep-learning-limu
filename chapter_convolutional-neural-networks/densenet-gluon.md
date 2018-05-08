@@ -10,7 +10,7 @@ ResNet的跨层连接思想影响了接下来的众多工作。这里我们介�
 
 我们先来定义一个稠密连接块。DenseNet的卷积块使用ResNet改进版本的`BN->Relu->Conv`。每个卷积的输出通道数被称之为`growth_rate`，这是因为假设输出为`in_channels`，而且有`layers`层，那么输出的通道数就是`in_channels+growth_rate*layers`。
 
-```{.python .input}
+```{.python .input  n=1}
 from mxnet import nd
 from mxnet.gluon import nn
 
@@ -31,15 +31,15 @@ class DenseBlock(nn.Block):
             self.net.add(conv_block(growth_rate))
 
     def forward(self, x):
-        for layer in self.net:
+        for layer in self.net:#两层layer
             out = layer(x)
-            x = nd.concat(x, out, dim=1)
+            x = nd.concat(x, out, dim=1)#X，和out维度要保持一致 第一次layer后channel是13 ，第二次是23层，out是10，加上第一次
         return x
 ```
 
 我们验证下输出通道数是不是符合预期。
 
-```{.python .input}
+```{.python .input  n=2}
 dblk = DenseBlock(2, 10)
 dblk.initialize()
 
@@ -47,10 +47,23 @@ x = nd.random.uniform(shape=(4,3,8,8))
 dblk(x).shape
 ```
 
+```{.json .output n=2}
+[
+ {
+  "data": {
+   "text/plain": "(4, 23, 8, 8)"
+  },
+  "execution_count": 2,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
+```
+
 ## 过渡块（Transition Block）
 因为使用拼接的缘故，每经过一次拼接输出通道数可能会激增。为了控制模型复杂度，这里引入一个过渡块，它不仅把输入的长宽减半，同时也使用$1\times1$卷积来改变通道数。
 
-```{.python .input}
+```{.python .input  n=3}
 def transition_block(channels):
     out = nn.Sequential()
     out.add(
@@ -64,11 +77,24 @@ def transition_block(channels):
 
 验证一下结果：
 
-```{.python .input}
+```{.python .input  n=4}
 tblk = transition_block(10)
 tblk.initialize()
 
 tblk(x).shape
+```
+
+```{.json .output n=4}
+[
+ {
+  "data": {
+   "text/plain": "(4, 10, 4, 4)"
+  },
+  "execution_count": 4,
+  "metadata": {},
+  "output_type": "execute_result"
+ }
+]
 ```
 
 ## DenseNet
